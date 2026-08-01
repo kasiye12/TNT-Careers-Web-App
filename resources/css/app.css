@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+@layer base {
+    body {
+        @apply bg-[#f5f7fa] text-[#2d3748] antialiased;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    ::selection { @apply bg-[#0ea5e9] text-white; }
+}
+
+@layer components {
+    .btn-primary {
+        @apply inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-[#0ea5e9] to-[#0284c7] text-white font-semibold rounded-xl hover:from-[#0284c7] hover:to-[#0369a1] transition-all duration-300 shadow-lg shadow-sky-500/25 hover:shadow-xl hover:shadow-sky-500/30 active:scale-[0.98];
+    }
+    .btn-outline {
+        @apply inline-flex items-center justify-center px-6 py-3 border-2 border-[#0ea5e9] text-[#0ea5e9] font-semibold rounded-xl hover:bg-[#0ea5e9] hover:text-white transition-all duration-300;
+    }
+    .btn-light {
+        @apply inline-flex items-center justify-center px-6 py-3 bg-white text-[#2d3748] font-semibold rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all duration-300;
+    }
+    .card {
+        @apply bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300;
+    }
+    .glass {
+        @apply bg-white/90 backdrop-blur-xl border border-white/50 shadow-lg;
+    }
+}

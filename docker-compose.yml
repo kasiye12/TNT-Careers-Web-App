@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tnt-rats-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - /var/www/html/node_modules
+      - /var/www/html/vendor
+    networks:
+      - tnt-network
+
+  db:
+    image: mysql:8.0
+    container_name: tnt-rats-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: tnt_rats
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-password}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-password}
+      MYSQL_USER: tnt_user
+    ports:
+      - "3306:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+    networks:
+      - tnt-network
+
+  redis:
+    image: redis:alpine
+    container_name: tnt-rats-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - tnt-network
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: tnt-rats-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - tnt-network
+
+networks:
+  tnt-network:
+    driver: bridge
+
+volumes:
+  dbdata:
+    driver: local
