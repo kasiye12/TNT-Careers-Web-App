@@ -37,16 +37,16 @@
                         <td class="px-4 py-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-9 h-9 bg-purple-100 rounded-lg flex items-center justify-center text-sm font-bold text-purple-600">
-                                    {{ substr($app->applicant->full_name_en ?? '?', 0, 1) }}
+                                    {{ substr($app->applicant->full_name_en ?? 'N/A' ?? '?', 0, 1) }}
                                 </div>
                                 <div>
-                                    <p class="font-semibold text-gray-900">{{ $app->applicant->full_name_en ?? 'N/A' }}</p>
-                                    <p class="text-[11px] text-gray-400">{{ $app->applicant->user->email ?? '' }}</p>
+                                    <p class="font-semibold text-gray-900">{{ $app->applicant->full_name_en ?? 'N/A' ?? 'N/A' }}</p>
+                                    <p class="text-[11px] text-gray-400">{{ $app->applicant->user->email ?? '' ?? '' }}</p>
                                 </div>
                             </div>
                         </td>
                         <td class="px-4 py-4">
-                            <p class="font-medium text-gray-900">{{ $app->vacancy->title ?? 'N/A' }}</p>
+                            <p class="font-medium text-gray-900">{{ $app->vacancy->title ?? 'N/A' ?? 'N/A' }}</p>
                             <p class="text-[11px] text-gray-400">{{ $app->vacancy->vacancy_number ?? '' }}</p>
                         </td>
                         <td class="px-4 py-4 text-center">

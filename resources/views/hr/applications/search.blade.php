@@ -50,8 +50,8 @@
                 <tbody>
                     @foreach($applications as $app)
                         <tr class="border-t hover:bg-gray-50">
-                            <td class="px-6 py-4 font-medium">{{ $app->applicant->full_name_en ?? 'N/A' }}</td>
-                            <td class="px-6 py-4">{{ $app->vacancy->title }}</td>
+                            <td class="px-6 py-4 font-medium">{{ $app->applicant->full_name_en ?? 'N/A' ?? 'N/A' }}</td>
+                            <td class="px-6 py-4">{{ $app->vacancy->title ?? 'N/A' }}</td>
                             <td class="px-6 py-4">
                                 <span class="px-2 py-1 rounded-full text-xs font-semibold bg-sky-100 text-[#0a5f89]">
                                     {{ ucwords(str_replace('_',' ',$app->status)) }}

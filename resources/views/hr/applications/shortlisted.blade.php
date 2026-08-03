@@ -29,13 +29,13 @@
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div class="flex items-start gap-4 flex-1">
                             <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                <span class="text-yellow-700 font-bold text-lg">{{ substr($app->applicant->full_name_en ?? '?', 0, 1) }}</span>
+                                <span class="text-yellow-700 font-bold text-lg">{{ substr($app->applicant->full_name_en ?? 'N/A' ?? '?', 0, 1) }}</span>
                             </div>
                             <div>
-                                <h3 class="font-bold text-lg text-[#0b3b5a]">{{ $app->applicant->full_name_en ?? 'N/A' }}</h3>
-                                <p class="text-sm text-gray-500">{{ $app->applicant->user->email ?? '' }}</p>
+                                <h3 class="font-bold text-lg text-[#0b3b5a]">{{ $app->applicant->full_name_en ?? 'N/A' ?? 'N/A' }}</h3>
+                                <p class="text-sm text-gray-500">{{ $app->applicant->user->email ?? '' ?? '' }}</p>
                                 <div class="flex flex-wrap gap-2 mt-2 text-sm text-gray-600">
-                                    <span><i class="fas fa-briefcase mr-1"></i> {{ $app->vacancy->title }}</span>
+                                    <span><i class="fas fa-briefcase mr-1"></i> {{ $app->vacancy->title ?? 'N/A' }}</span>
                                     <span><i class="fas fa-clock mr-1"></i> {{ $app->applicant->total_years_exp ?? 0 }} yrs</span>
                                 </div>
                             </div>

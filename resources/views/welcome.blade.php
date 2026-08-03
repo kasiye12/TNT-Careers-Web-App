@@ -43,7 +43,7 @@
                     <div class="text-xs font-semibold text-white/80 uppercase tracking-wider">Years Exp.</div>
                 </div>
                 <div class="stat-card glass-card rounded-2xl p-5 text-center backdrop-blur-sm border border-white/20 col-span-3 md:col-span-1">
-                    <div class="text-3xl font-extrabold text-white">500+</div>
+                    <div class="text-3xl font-extrabold text-white">2,500+</div>
                     <div class="text-xs font-semibold text-white/80 uppercase tracking-wider">Employees</div>
                 </div>
             </div>
@@ -107,7 +107,7 @@
                 <div class="mt-5 flex flex-wrap gap-5 text-sm font-medium">
                     <span class="flex items-center gap-2"><i class="fas fa-check-circle text-[#0a7aa8]"></i> Grade 1 Contractor</span>
                     <span class="flex items-center gap-2"><i class="fas fa-check-circle text-[#0a7aa8]"></i> 20+ years excellence</span>
-                    <span class="flex items-center gap-2"><i class="fas fa-check-circle text-[#0a7aa8]"></i> 500+ team members</span>
+                    <span class="flex items-center gap-2"><i class="fas fa-check-circle text-[#0a7aa8]"></i> 2,500+ permanent employees</span>
                 </div>
             </div>
             <div class="flex-shrink-0 flex gap-3">

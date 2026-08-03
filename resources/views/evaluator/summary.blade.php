@@ -83,8 +83,8 @@
                             @endphp
                             <tr class="hover:bg-gray-50 {{ $total >= 70 ? 'bg-green-50/20' : '' }}">
                                 <td class="px-4 py-4">{{ $index + 1 }}</td>
-                                <td class="px-4 py-4 font-semibold">{{ $app->applicant->full_name_en ?? 'N/A' }}</td>
-                                <td class="px-4 py-4 text-gray-600">{{ $app->vacancy->title ?? 'N/A' }}</td>
+                                <td class="px-4 py-4 font-semibold">{{ $app->applicant->full_name_en ?? 'N/A' ?? 'N/A' }}</td>
+                                <td class="px-4 py-4 text-gray-600">{{ $app->vacancy->title ?? 'N/A' ?? 'N/A' }}</td>
                                 <td class="px-4 py-4 text-center font-bold">{{ number_format($academic,1) }}%</td>
                                 <td class="px-4 py-4 text-center font-bold">{{ number_format($written,1) }}%</td>
                                 <td class="px-4 py-4 text-center font-bold">{{ number_format($interview,1) }}%</td>

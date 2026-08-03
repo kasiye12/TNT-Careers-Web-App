@@ -83,8 +83,8 @@
             <tbody class="divide-y divide-gray-100">
                 @foreach(\App\Models\Application::with(['vacancy', 'applicant'])->latest()->take(10)->get() as $app)
                     <tr class="hover:bg-gray-50">
-                        <td class="px-5 py-4 font-semibold">{{ $app->applicant->full_name_en ?? 'N/A' }}</td>
-                        <td class="px-5 py-4 text-gray-600">{{ $app->vacancy->title ?? 'N/A' }}</td>
+                        <td class="px-5 py-4 font-semibold">{{ $app->applicant->full_name_en ?? 'N/A' ?? 'N/A' }}</td>
+                        <td class="px-5 py-4 text-gray-600">{{ $app->vacancy->title ?? 'N/A' ?? 'N/A' }}</td>
                         <td class="px-5 py-4">
                             <span class="px-2 py-1 rounded-full text-xs font-semibold
                                 @if($app->status == 'selected') bg-green-100 text-green-700

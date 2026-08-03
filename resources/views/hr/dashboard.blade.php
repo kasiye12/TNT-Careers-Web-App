@@ -157,7 +157,7 @@
                     <a href="{{ route('hr.applications.pipeline') }}" class="flex items-center p-2 hover:bg-sky-50 rounded-lg text-sm">
                         <i class="fas fa-sitemap w-5 mr-2 text-purple-500"></i> Pipeline Management
                     </a>
-                    <a href="{{ route('hr.reports.analytics') }}" class="flex items-center p-2 hover:bg-sky-50 rounded-lg text-sm">
+                    <a href="{{ '/hr/reports/analytics' }}" class="flex items-center p-2 hover:bg-sky-50 rounded-lg text-sm">
                         <i class="fas fa-chart-bar w-5 mr-2 text-green-500"></i> Analytics
                     </a>
                 </div>

@@ -36,7 +36,7 @@
                     @foreach($applications as $app)
                         <tr class="border-b hover:bg-gray-50 {{ $rank === 1 ? 'bg-green-50' : '' }}">
                             <td class="px-4 py-3 font-bold">#{{ $rank }}</td>
-                            <td class="px-4 py-3 font-medium">{{ $app->applicant->full_name_en }}</td>
+                            <td class="px-4 py-3 font-medium">{{ $app->applicant->full_name_en ?? 'N/A' }}</td>
                             <td class="px-4 py-3 text-center">{{ $app->applicant->total_years_exp }} yrs</td>
                             <td class="px-4 py-3 text-center">{{ number_format($app->academic_score, 1) }}%</td>
                             <td class="px-4 py-3 text-center">{{ number_format($app->written_score, 1) }}%</td>

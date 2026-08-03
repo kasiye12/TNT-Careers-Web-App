@@ -27,7 +27,7 @@ class ApplicationController extends Controller implements HasMiddleware
         return [new Middleware('auth')];
     }
 
-    // Applicant methods
+    // APPLICANT METHODS
     public function apply(Vacancy $vacancy)
     {
         $user = Auth::user();
@@ -59,7 +59,7 @@ class ApplicationController extends Controller implements HasMiddleware
             return redirect()->route('applicant.applications')->with('info', 'Already applied.');
         }
         
-        $application = Application::create([
+        Application::create([
             'vacancy_id' => $vacancy->id,
             'applicant_id' => $applicant->id,
             'status' => 'submitted',
@@ -67,7 +67,7 @@ class ApplicationController extends Controller implements HasMiddleware
             'submitted_at' => now(),
         ]);
         
-        return redirect()->route('applicant.applications')->with('success', 'Application submitted!');
+        return redirect()->route('applicant.applications')->with('success', '✅ Application submitted!');
     }
 
     public function myApplications()
@@ -80,14 +80,17 @@ class ApplicationController extends Controller implements HasMiddleware
 
     public function show(Application $application)
     {
-        $application->load(['vacancy', 'applicant', 'interviews', 'evaluationScores']);
+        $application->load(['vacancy', 'applicant.user', 'applicant.educationHistories', 'applicant.workExperiences', 'interviews', 'evaluationScores']);
         return view('applications.show', compact('application'));
     }
 
-    // HR Methods
+    // HR METHODS
     public function reviewIndex()
     {
-        $applications = Application::with(['vacancy', 'applicant.user'])->where('status', 'submitted')->latest()->paginate(20);
+        $applications = Application::with(['vacancy', 'applicant.user'])
+            ->where('status', 'submitted')
+            ->latest()
+            ->paginate(20);
         return view('hr.applications.review', compact('applications'));
     }
 
@@ -97,7 +100,7 @@ class ApplicationController extends Controller implements HasMiddleware
     }
 
     /**
-     * Update application status through pipeline stages
+     * UPDATE APPLICATION STATUS - APPROVE / REJECT / MOVE STAGE
      */
     public function updateStatus(Request $request, Application $application)
     {
@@ -109,54 +112,69 @@ class ApplicationController extends Controller implements HasMiddleware
         
         $request->validate([
             'status' => 'required|in:' . implode(',', $validStatuses),
-            'notes' => 'nullable|string',
+            'notes' => 'nullable|string|max:500',
         ]);
 
         $oldStatus = $application->status;
         $newStatus = $request->status;
         
+        // Update application
         $application->update([
             'status' => $newStatus,
-            'rejection_reason' => $newStatus === 'rejected' ? $request->notes : null,
+            'rejection_reason' => $newStatus === 'rejected' ? ($request->notes ?: 'Application rejected') : null,
         ]);
 
-        // Log the status change
-        $application->statusLogs()->create([
-            'changed_by' => Auth::id(),
-            'old_status' => $oldStatus,
-            'new_status' => $newStatus,
-            'notes' => $request->notes ?? 'Status updated to ' . ucwords(str_replace('_', ' ', $newStatus)),
-        ]);
+        // Log status change
+        try {
+            $application->statusLogs()->create([
+                'changed_by' => Auth::id(),
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'notes' => $request->notes ?? 'Status updated to ' . ucwords(str_replace('_', ' ', $newStatus)),
+            ]);
+        } catch (\Exception $e) {
+            // Continue even if logging fails
+        }
 
-        $message = match($newStatus) {
-            'written_exam' => 'Candidate moved to Written Exam stage.',
-            'interview' => 'Candidate moved to Interview stage.',
-            'medical_check' => 'Candidate moved to Medical Check stage.',
-            'selected' => '🎉 Candidate selected! You can now generate an offer letter.',
-            'rejected' => 'Application rejected.',
-            'shortlisted' => 'Candidate shortlisted.',
-            default => 'Status updated successfully.'
-        };
+        // Success messages
+        $messages = [
+            'document_verified' => '✅ Documents verified successfully!',
+            'shortlisted' => '⭐ Candidate shortlisted! Move to next stage.',
+            'written_exam' => '📝 Candidate moved to Written Exam stage.',
+            'interview' => '🎤 Candidate moved to Interview stage.',
+            'medical_check' => '🏥 Candidate moved to Medical Check stage.',
+            'selected' => '🎉 Candidate SELECTED! You can now generate an offer letter.',
+            'rejected' => '❌ Application rejected.',
+        ];
 
-        return back()->with('success', $message);
+        return back()->with('success', $messages[$newStatus] ?? 'Status updated successfully!');
     }
 
     public function shortlistedCandidates()
     {
-        $applications = Application::with(['vacancy', 'applicant'])->where('status', 'shortlisted')->latest()->paginate(20);
+        $applications = Application::with(['vacancy', 'applicant.user'])
+            ->where('status', 'shortlisted')
+            ->latest()
+            ->paginate(20);
         return view('hr.applications.shortlisted', compact('applications'));
     }
 
     public function downloadHRPDF(Application $application)
     {
         $pdfPath = storage_path("app/private/applications/{$application->id}/HR_Application_{$application->id}.pdf");
-        if (!file_exists($pdfPath)) $pdfPath = $this->pdfService->generateHRMasterPDF($application);
+        if (!file_exists($pdfPath)) {
+            try {
+                $pdfPath = $this->pdfService->generateHRMasterPDF($application);
+            } catch (\Exception $e) {
+                return back()->with('error', 'Could not generate PDF.');
+            }
+        }
         return response()->download($pdfPath);
     }
 
     public function search(Request $request)
     {
-        $query = Application::with(['vacancy', 'applicant']);
+        $query = Application::with(['vacancy', 'applicant.user']);
         if ($request->filled('vacancy_id')) $query->where('vacancy_id', $request->vacancy_id);
         if ($request->filled('status')) $query->where('status', $request->status);
         $applications = $query->latest()->paginate(20);

@@ -13,7 +13,7 @@
             @foreach($applications as $app)
                 <div class="job-card bg-white rounded-2xl p-6 shadow-sm border flex justify-between items-center">
                     <div>
-                        <h3 class="font-bold text-[#0b3b5a]">{{ $app->vacancy->title }}</h3>
+                        <h3 class="font-bold text-[#0b3b5a]">{{ $app->vacancy->title ?? 'N/A' }}</h3>
                         <p class="text-sm text-gray-500">Applied: {{ $app->created_at->format('M d, Y') }}</p>
                     </div>
                     <div class="flex items-center gap-3">

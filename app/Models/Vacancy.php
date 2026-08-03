@@ -10,35 +10,14 @@ class Vacancy extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'vacancy_number',
-        'title',
-        'job_category',
-        'department',
-        'duty_station_category',
-        'duty_station',
-        'specific_location',
-        'employment_type',
-        'positions_count',
-        'salary_type',
-        'salary_amount',
-        'salary_currency',
-        'min_years_experience',
-        'max_years_experience',
-        'required_field_of_study',
-        'minimum_cgpa',
-        'min_education_level',
-        'construction_experience_required',
-        'min_construction_years',
-        'opening_date',
-        'closing_date',
-        'description_en',
-        'description_am',
-        'responsibilities_en',
-        'responsibilities_am',
-        'requirements_en',
-        'requirements_am',
-        'status',
-        'created_by',
+        'vacancy_number', 'title', 'job_category', 'department',
+        'duty_station_category', 'duty_station', 'specific_location',
+        'employment_type', 'positions_count', 'salary_type', 'salary_amount', 'salary_currency',
+        'min_years_experience', 'max_years_experience', 'required_field_of_study',
+        'minimum_cgpa', 'min_education_level', 'construction_experience_required',
+        'min_construction_years', 'opening_date', 'closing_date',
+        'description_en', 'description_am', 'responsibilities_en', 'responsibilities_am',
+        'requirements_en', 'requirements_am', 'status', 'created_by', 'views_count',
     ];
 
     protected $casts = [
@@ -46,6 +25,7 @@ class Vacancy extends Model
         'closing_date' => 'date',
         'construction_experience_required' => 'boolean',
         'salary_amount' => 'decimal:2',
+        'views_count' => 'integer',
     ];
 
     public function applications()
@@ -60,20 +40,12 @@ class Vacancy extends Model
 
     public function scopePublished($query)
     {
-        return $query->where('status', 'published')
-            ->where('closing_date', '>=', now());
+        return $query->where('status', 'published')->where('closing_date', '>=', now());
     }
 
-    public function scopeByCategory($query, $category)
+    public function incrementViews()
     {
-        return $query->where('job_category', $category);
-    }
-
-    public function generateVacancyNumber(): string
-    {
-        $year = date('Y');
-        $count = static::whereYear('created_at', $year)->count() + 1;
-        return sprintf('TNT-VAC-%s-%03d', $year, $count);
+        $this->increment('views_count');
     }
 
     public function getApplicationsCountAttribute(): int

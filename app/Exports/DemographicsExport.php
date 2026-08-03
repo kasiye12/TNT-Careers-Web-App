@@ -11,14 +11,9 @@ class DemographicsExport implements FromView, ShouldAutoSize
 {
     public function view(): View
     {
-        $genderStats = Applicant::selectRaw('gender, COUNT(*) as count')
-            ->groupBy('gender')
-            ->get();
-
+        $genderStats = Applicant::selectRaw('gender, COUNT(*) as count')->groupBy('gender')->get();
         $regionalStats = Applicant::selectRaw('region, gender, COUNT(*) as count')
-            ->groupBy('region', 'gender')
-            ->get()
-            ->groupBy('region');
+            ->groupBy('region', 'gender')->get()->groupBy('region');
 
         return view('exports.demographics', compact('genderStats', 'regionalStats'));
     }

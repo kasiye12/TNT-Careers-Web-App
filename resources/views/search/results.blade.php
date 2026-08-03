@@ -23,7 +23,7 @@
         <div class="space-y-3 mb-8">
             @foreach($applications as $app)
                 <a href="{{ route('applicant.applications.show', $app) }}" class="block bg-white rounded-2xl p-5 shadow-sm border hover:shadow-md transition">
-                    <p class="font-semibold">{{ $app->applicant->full_name_en }} - {{ $app->vacancy->title }}</p>
+                    <p class="font-semibold">{{ $app->applicant->full_name_en ?? 'N/A' }} - {{ $app->vacancy->title ?? 'N/A' }}</p>
                     <p class="text-sm text-gray-500">{{ $app->status }}</p>
                 </a>
             @endforeach

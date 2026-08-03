@@ -10,112 +10,62 @@ use App\Exports\ApplicationsExport;
 use App\Exports\DemographicsExport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
 
-class ReportController extends Controller implements HasMiddleware
+class ReportController extends Controller
 {
-    public static function middleware(): array
-    {
-        return [
-            new Middleware('auth'),
-            new Middleware('role:admin,hr_manager'),
-        ];
-    }
-
     public function vacancyProgress()
     {
-        $vacancies = Vacancy::withCount(['applications', 'applications as shortlisted_count' => function ($query) {
-            $query->where('status', 'shortlisted');
-        }, 'applications as selected_count' => function ($query) {
-            $query->where('status', 'selected');
-        }])->orderBy('created_at', 'desc')->get();
+        $vacancies = Vacancy::withCount(['applications', 
+            'applications as shortlisted_count' => fn($q) => $q->where('status', 'shortlisted'),
+            'applications as selected_count' => fn($q) => $q->where('status', 'selected')
+        ])->orderBy('created_at', 'desc')->get();
 
         return view('reports.vacancy-progress', compact('vacancies'));
     }
 
     public function genderDemographics()
     {
-        $genderStats = Applicant::selectRaw('gender, COUNT(*) as count')
-            ->groupBy('gender')
-            ->get();
-
+        $genderStats = Applicant::selectRaw('gender, COUNT(*) as count')->groupBy('gender')->get();
         $regionalGenderStats = Applicant::selectRaw('region, gender, COUNT(*) as count')
-            ->groupBy('region', 'gender')
-            ->get()
-            ->groupBy('region');
+            ->groupBy('region', 'gender')->get()->groupBy('region');
 
         return view('reports.demographics', compact('genderStats', 'regionalGenderStats'));
     }
 
     public function exportApplications(Request $request)
     {
-        $request->validate([
-            'vacancy_id' => 'required|exists:vacancies,id',
-            'format' => 'required|in:excel,pdf',
-        ]);
-
-        $vacancy = Vacancy::find($request->vacancy_id);
-        $applications = Application::with(['applicant', 'evaluationScores'])
-            ->where('vacancy_id', $request->vacancy_id)
-            ->get();
-
-        if ($request->format === 'excel') {
-            return Excel::download(
-                new ApplicationsExport($vacancy, $applications),
-                "applications_{$vacancy->vacancy_number}.xlsx"
-            );
+        try {
+            return Excel::download(new ApplicationsExport, 'applications_' . now()->format('Y-m-d') . '.xlsx');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Export failed: ' . $e->getMessage());
         }
-
-        $pdf = PDF::loadView('reports.exports.applications-pdf', [
-            'vacancy' => $vacancy,
-            'applications' => $applications,
-        ]);
-
-        return $pdf->download("applications_{$vacancy->vacancy_number}.pdf");
     }
 
     public function exportDemographics()
     {
-        return Excel::download(
-            new DemographicsExport(),
-            'demographics_report.xlsx'
-        );
+        try {
+            return Excel::download(new DemographicsExport, 'demographics_' . now()->format('Y-m-d') . '.xlsx');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Export failed: ' . $e->getMessage());
+        }
     }
 
     public function shortlistMatrixPDF(Request $request)
     {
-        $request->validate([
-            'vacancy_id' => 'required|exists:vacancies,id',
-        ]);
-
         $applications = Application::with(['applicant', 'evaluationScores'])
-            ->where('vacancy_id', $request->vacancy_id)
             ->whereIn('status', ['interview', 'medical_check'])
-            ->get();
-
-        foreach ($applications as $application) {
-            $application->academic_score = $application->evaluationScores()
-                ->where('evaluation_type', 'academic_experience')
-                ->avg('score') ?? 0;
-            
-            $application->written_score = $application->evaluationScores()
-                ->where('evaluation_type', 'written_exam')
-                ->avg('score') ?? 0;
-            
-            $application->interview_score = $application->evaluationScores()
-                ->where('evaluation_type', 'panel_interview')
-                ->avg('score') ?? 0;
-            
-            $application->weighted_total = 
-                ($application->academic_score * 0.3) + 
-                ($application->written_score * 0.4) + 
-                ($application->interview_score * 0.3);
-        }
+            ->get()
+            ->map(function ($app) {
+                $app->academic_score = $app->evaluationScores->where('evaluation_type','academic_experience')->avg('score') ?? 0;
+                $app->written_score = $app->evaluationScores->where('evaluation_type','written_exam')->avg('score') ?? 0;
+                $app->interview_score = $app->evaluationScores->where('evaluation_type','panel_interview')->avg('score') ?? 0;
+                $app->weighted_total = ($app->academic_score * 0.3) + ($app->written_score * 0.4) + ($app->interview_score * 0.3);
+                return $app;
+            })->sortByDesc('weighted_total');
 
         $pdf = PDF::loadView('reports.exports.shortlist-matrix-pdf', [
             'vacancy' => Vacancy::find($request->vacancy_id),
-            'applications' => $applications->sortByDesc('weighted_total'),
+            'applications' => $applications,
         ]);
 
         return $pdf->download('shortlist_matrix.pdf');

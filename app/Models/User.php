@@ -6,55 +6,31 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Laravel\Sanctum\HasApiTokens;
+use App\Notifications\ResetPasswordNotification;
 
 class User extends Authenticatable
 {
     use HasApiTokens, HasRoles, Notifiable;
-    // Removed: implements MustVerifyEmail
 
     protected $fillable = [
-        'name',
-        'email',
-        'phone',
-        'password',
-        'user_type',
-        'status',
-        'email_verified_at',
-        'notification_preferences',
+        'name', 'email', 'phone', 'password', 'user_type', 'status',
+        'email_verified_at', 'notification_preferences', 'google_id', 'avatar',
     ];
 
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    protected $hidden = ['password', 'remember_token'];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
 
-    public function applicant()
-    {
-        return $this->hasOne(Applicant::class);
-    }
+    public function applicant() { return $this->hasOne(Applicant::class); }
 
-    public function isAdmin(): bool
+    /**
+     * Send the password reset notification.
+     */
+    public function sendPasswordResetNotification($token)
     {
-        return $this->user_type === 'admin';
-    }
-
-    public function isHRManager(): bool
-    {
-        return $this->user_type === 'hr_manager';
-    }
-
-    public function isEvaluator(): bool
-    {
-        return $this->user_type === 'evaluator';
-    }
-
-    public function isApplicant(): bool
-    {
-        return $this->user_type === 'applicant';
+        $this->notify(new ResetPasswordNotification($token));
     }
 }

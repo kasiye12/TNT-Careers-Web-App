@@ -26,83 +26,62 @@ class VacancyController extends Controller implements HasMiddleware
         ];
     }
 
-    // PUBLIC - Job Listings with Search & Filter
+    // PUBLIC - Job Listings
     public function publicIndex(Request $request)
     {
-        $query = Vacancy::where('status', 'published')
-            ->where('closing_date', '>=', now());
+        $query = Vacancy::where('status', 'published')->where('closing_date', '>=', now());
 
-        // Search by title, department, or location
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
                   ->orWhere('department', 'like', "%{$search}%")
-                  ->orWhere('duty_station', 'like', "%{$search}%")
-                  ->orWhere('vacancy_number', 'like', "%{$search}%");
+                  ->orWhere('duty_station', 'like', "%{$search}%");
             });
         }
-
-        // Filter by category/department
         if ($request->filled('category')) {
             $query->where('department', 'like', "%{$request->category}%");
         }
-
-        // Filter by location
         if ($request->filled('location')) {
-            if ($request->location === 'head_office') {
-                $query->where('duty_station_category', 'head_office');
-            } elseif ($request->location === 'project_site') {
-                $query->where('duty_station_category', 'project_site');
-            }
+            if ($request->location === 'head_office') $query->where('duty_station_category', 'head_office');
+            elseif ($request->location === 'project_site') $query->where('duty_station_category', 'project_site');
         }
-
-        // Filter by employment type
         if ($request->filled('type')) {
             $query->where('employment_type', $request->type);
         }
 
         $vacancies = $query->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
-        
-        // Get unique departments for filter dropdown
-        $departments = Vacancy::where('status', 'published')
-            ->distinct()
-            ->pluck('department')
-            ->filter()
-            ->values();
+        $departments = Vacancy::where('status', 'published')->distinct()->pluck('department')->filter()->values();
 
         return view('public.vacancies', compact('vacancies', 'departments'));
     }
 
-    // PUBLIC - Job Detail
+    // PUBLIC - Job Detail with View Count
     public function publicShow(Vacancy $vacancy)
     {
         if ($vacancy->status !== 'published' && !Auth::check()) {
             abort(404);
         }
+        
+        // Increment view count
+        $vacancy->incrementViews();
+        
         return view('public.vacancy-detail', compact('vacancy'));
     }
 
-    // API for WordPress
+    // API
     public function apiLatest()
     {
-        $vacancies = Vacancy::published()
-            ->select('id', 'title', 'department', 'duty_station', 'closing_date')
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get()
-            ->map(function ($vacancy) {
-                return [
-                    'id' => $vacancy->id,
-                    'title' => $vacancy->title,
-                    'department' => $vacancy->department,
-                    'duty_station' => $vacancy->duty_station,
-                    'closing_date' => $vacancy->closing_date->format('Y-m-d'),
-                    'apply_url' => route('vacancies.public.show', $vacancy->id),
-                ];
-            });
-
-        return response()->json($vacancies);
+        return response()->json(
+            Vacancy::published()->select('id', 'title', 'department', 'duty_station', 'closing_date', 'views_count')
+                ->orderBy('created_at', 'desc')->limit(10)->get()
+                ->map(fn($v) => [
+                    'id' => $v->id, 'title' => $v->title, 'department' => $v->department,
+                    'duty_station' => $v->duty_station, 'closing_date' => $v->closing_date->format('Y-m-d'),
+                    'views_count' => $v->views_count,
+                    'apply_url' => route('vacancies.public.show', $v->id)
+                ])
+        );
     }
 
     // HR Methods
@@ -114,17 +93,7 @@ class VacancyController extends Controller implements HasMiddleware
 
     public function create()
     {
-        $jobCategories = [
-            'executive_management' => 'Executive Management',
-            'project_engineering' => 'Project Engineering',
-            'office_engineering' => 'Office Engineering',
-            'occupational_health_safety' => 'Occupational Health & Safety',
-            'finance_accounting' => 'Finance & Accounting',
-            'equipment_logistics' => 'Equipment & Logistics',
-            'trade_tvet_foremen' => 'Trade & TVET Foremen',
-            'other' => 'Other',
-        ];
-        return view('hr.vacancies.create', compact('jobCategories'));
+        return view('hr.vacancies.create');
     }
 
     public function store(Request $request)
@@ -145,7 +114,7 @@ class VacancyController extends Controller implements HasMiddleware
             'description_en' => 'nullable|string',
             'description_am' => 'nullable|string',
             'requirements_en' => 'nullable|string',
-            'requirements_am' => 'nullable|string',
+            'responsibilities_en' => 'nullable|string',
         ]);
 
         $validated['vacancy_number'] = $this->numberGenerator->generate();
@@ -153,18 +122,14 @@ class VacancyController extends Controller implements HasMiddleware
         $validated['status'] = request('status', 'draft');
 
         Vacancy::create($validated);
-
-        return redirect()->route('hr.vacancies.index')->with('success', 'Vacancy created successfully!');
+        return redirect()->route('hr.vacancies.index')->with('success', 'Vacancy created!');
     }
 
-    public function edit(Vacancy $vacancy)
-    {
-        return view('hr.vacancies.edit', compact('vacancy'));
-    }
+    public function edit(Vacancy $vacancy) { return view('hr.vacancies.edit', compact('vacancy')); }
 
     public function update(Request $request, Vacancy $vacancy)
     {
-        $validated = $request->validate([
+        $vacancy->update($request->validate([
             'title' => 'required|string|max:255',
             'department' => 'required|string|max:100',
             'duty_station' => 'required|string|max:100',
@@ -174,29 +139,12 @@ class VacancyController extends Controller implements HasMiddleware
             'min_education_level' => 'required|string',
             'closing_date' => 'required|date',
             'description_en' => 'nullable|string',
-            'description_am' => 'nullable|string',
             'requirements_en' => 'nullable|string',
-        ]);
-
-        $vacancy->update($validated);
-        return redirect()->route('hr.vacancies.index')->with('success', 'Vacancy updated!');
+        ]));
+        return redirect()->route('hr.vacancies.index')->with('success', 'Updated!');
     }
 
-    public function publish(Vacancy $vacancy)
-    {
-        $vacancy->update(['status' => 'published']);
-        return back()->with('success', 'Vacancy published!');
-    }
-
-    public function close(Vacancy $vacancy)
-    {
-        $vacancy->update(['status' => 'closed']);
-        return back()->with('success', 'Vacancy closed.');
-    }
-
-    public function destroy(Vacancy $vacancy)
-    {
-        $vacancy->delete();
-        return redirect()->route('hr.vacancies.index')->with('success', 'Vacancy archived.');
-    }
+    public function publish(Vacancy $vacancy) { $vacancy->update(['status' => 'published']); return back()->with('success', 'Published!'); }
+    public function close(Vacancy $vacancy) { $vacancy->update(['status' => 'closed']); return back()->with('success', 'Closed.'); }
+    public function destroy(Vacancy $vacancy) { $vacancy->delete(); return redirect()->route('hr.vacancies.index')->with('success', 'Archived.'); }
 }

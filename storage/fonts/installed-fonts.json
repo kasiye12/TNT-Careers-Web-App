@@ -22,5 +22,14 @@
         "bold": "\/home\/ks\/tnt-rats\/storage\/fonts\/roboto_bold_1a8c4a1acbd70e6f5947d46ac9a3bfc6",
         "800": "\/home\/ks\/tnt-rats\/storage\/fonts\/roboto_800_d15c977d48011bfa2c7ece830e5fd04e",
         "900": "roboto_900_9fe88a0540d48d043e0aa7abb9ab4e7b"
+    },
+    "raleway": {
+        "300": "\/home\/ks\/tnt-rats\/storage\/fonts\/raleway_300_239338e1dba61ad0d70dfd11d33f7b8c",
+        "normal": "\/home\/ks\/tnt-rats\/storage\/fonts\/raleway_normal_ebd88fef4ec167144869826d5b5bee06",
+        "500": "\/home\/ks\/tnt-rats\/storage\/fonts\/raleway_500_c99c78e180b36296be899e0fb7d9fd7d",
+        "600": "\/home\/ks\/tnt-rats\/storage\/fonts\/raleway_600_66f2d061bc5654952330a2f8d4f536e6",
+        "bold": "\/home\/ks\/tnt-rats\/storage\/fonts\/raleway_bold_eaad0b6681e32f7107193d5db7c7c55f",
+        "800": "\/home\/ks\/tnt-rats\/storage\/fonts\/raleway_800_42f678b56983b843c02d54652f3a71c7",
+        "900": "raleway_900_e45da1b6c35b2e295a811ee866215fbd"
     }
 }

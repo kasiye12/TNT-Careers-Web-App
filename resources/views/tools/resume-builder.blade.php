@@ -2,351 +2,980 @@
 @section('title', 'Professional Resume Builder')
 
 @push('styles')
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Lato:wght@300;400;700;900&family=Montserrat:wght@300;400;500;600;700;800&family=Open+Sans:wght@300;400;600;700;800&family=Raleway:wght@300;400;500;600;700;800&family=Merriweather:wght@300;400;700;900&family=Playfair+Display:wght@400;500;600;700;800&family=Caladea:wght@400;700&family=Lora:wght@400;500;600;700&family=Roboto+Slab:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-    :root {
-        --theme: #2563eb;
+    * { font-family: 'Inter', sans-serif; }
+    
+    .resume-builder-container {
+        background: #f0f2f5;
+        min-height: calc(100vh - 64px);
+        display: flex;
+        flex-direction: column;
     }
+    
+    .main-layout {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+        height: calc(100vh - 64px);
+    }
+    
+    /* Form Panel - Minimalist Beleqet Style */
+    .form-panel {
+        background: #ffffff;
+        border-right: 1px solid #e8ecf0;
+        overflow-y: auto;
+        padding: 24px 22px 40px;
+        width: 420px;
+        flex-shrink: 0;
+        height: 100%;
+    }
+    
+    .form-panel::-webkit-scrollbar { width: 4px; }
+    .form-panel::-webkit-scrollbar-track { background: #f1f5f9; }
+    .form-panel::-webkit-scrollbar-thumb { background: #d0d5dd; border-radius: 3px; }
+    
+    /* Preview Panel */
+    .preview-panel {
+        flex: 1;
+        padding: 30px;
+        overflow-y: auto;
+        background: #eef0f3;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        height: 100%;
+    }
+    
+    .preview-panel::-webkit-scrollbar { width: 4px; }
+    .preview-panel::-webkit-scrollbar-track { background: #eef0f3; }
+    .preview-panel::-webkit-scrollbar-thumb { background: #d0d5dd; border-radius: 3px; }
+    
     .resume-preview {
         width: 210mm;
         min-height: 297mm;
         background: white;
-        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        border-radius: 4px;
+        padding: 44px 48px;
         transition: all 0.3s ease;
-        overflow: hidden;
+        flex-shrink: 0;
     }
-    .form-input {
-        @apply w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm transition-all duration-200;
-        background: #f8fafc;
-    }
-    .form-input:focus {
-        @apply border-blue-500 bg-white;
-        box-shadow: 0 0 0 4px rgba(37,99,235,0.1);
-        outline: none;
-    }
-    .form-section {
-        @apply bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition-all duration-200;
-    }
-    .form-section:hover {
-        @apply border-blue-200 shadow-md;
-    }
-    .color-dot {
-        width: 32px; height: 32px;
-        border-radius: 50%;
-        cursor: pointer;
-        transition: all 0.2s;
-        border: 3px solid transparent;
-    }
-    .color-dot:hover { transform: scale(1.15); }
-    .color-dot.active { border-color: #1e293b; box-shadow: 0 0 0 3px rgba(37,99,235,0.3); }
     
-    .skill-circle {
-        width: 28px; height: 28px;
-        border-radius: 50%;
-        cursor: pointer;
+    /* Section Cards - Minimalist */
+    .section-card {
+        background: transparent;
+        border: none;
+        padding: 0;
+        margin-bottom: 18px;
+    }
+    
+    .section-card:last-child { margin-bottom: 0; }
+    
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #f0f2f5;
+    }
+    
+    .section-header h3 {
+        font-size: 11px;
+        font-weight: 700;
+        color: #1a1a2e;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin: 0;
+    }
+    
+    .section-header .badge {
+        font-size: 9px;
+        font-weight: 500;
+        color: #8b8b8b;
+        background: #f5f5f7;
+        padding: 2px 10px;
+        border-radius: 12px;
+    }
+    
+    .section-header .badge.optional {
+        background: #f0f0f2;
+        color: #9a9a9a;
+    }
+    
+    .form-label {
+        display: block;
+        font-size: 10px;
+        font-weight: 600;
+        color: #6b6b6b;
+        margin-bottom: 3px;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+    }
+    
+    .form-label .required {
+        color: #e74c3c;
+        margin-left: 2px;
+    }
+    
+    .form-label .optional-tag {
+        font-weight: 400;
+        color: #aaa;
+        font-size: 9px;
+        text-transform: none;
+        margin-left: 4px;
+    }
+    
+    .form-input {
+        width: 100%;
+        border: 1.5px solid #e8ecf0;
+        border-radius: 6px;
+        padding: 7px 12px;
+        font-size: 13px;
+        transition: all 0.15s ease;
+        background: #fafbfc;
+        color: #1a1a2e;
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .form-input:focus {
+        border-color: var(--theme, #4a90d9);
+        box-shadow: 0 0 0 3px rgba(74,144,217,0.08);
+        outline: none;
+        background: #ffffff;
+    }
+    
+    .form-input::placeholder {
+        color: #b0b0b0;
+        font-size: 12px;
+    }
+    
+    .form-input.textarea {
+        resize: vertical;
+        min-height: 40px;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+    
+    .form-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    
+    .form-grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 8px;
+    }
+    
+    .form-group {
+        margin-bottom: 10px;
+    }
+    
+    .form-group:last-child { margin-bottom: 0; }
+    
+    .form-divider {
+        height: 1px;
+        background: #e8ecf0;
+        margin: 14px 0;
+    }
+    
+    .btn-add-item {
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-        font-size: 10px;
-        border: 2px solid #e2e8f0;
-        transition: all 0.2s;
-        background: white;
-        color: #94a3b8;
+        gap: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--theme, #4a90d9);
+        background: transparent;
+        padding: 3px 8px;
+        border-radius: 4px;
+        border: 1px solid #e8ecf0;
+        cursor: pointer;
+        transition: all 0.15s ease;
     }
-    .skill-circle.filled {
-        background: var(--theme);
-        border-color: var(--theme);
+    
+    .btn-add-item:hover {
+        background: #f5f7fa;
+        border-color: #d0d5dd;
+    }
+    
+    .btn-add-item i { font-size: 10px; }
+    
+    .btn-remove-item {
+        background: none;
+        border: none;
+        color: #b0b0b0;
+        cursor: pointer;
+        font-size: 12px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        transition: all 0.15s ease;
+    }
+    
+    .btn-remove-item:hover {
+        color: #e74c3c;
+        background: #fdf0ee;
+    }
+    
+    .item-card {
+        background: #fafbfc;
+        border-radius: 6px;
+        padding: 10px 12px;
+        border: 1px solid #eef0f3;
+        margin-bottom: 8px;
+        position: relative;
+    }
+    
+    .item-card:last-child { margin-bottom: 0; }
+    
+    .item-card .item-actions {
+        position: absolute;
+        top: 6px;
+        right: 8px;
+        display: flex;
+        gap: 4px;
+    }
+    
+    .color-theme-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        position: relative;
+    }
+    
+    .color-theme-btn:hover { transform: scale(1.06); }
+    .color-theme-btn.active { 
+        border-color: #1a1a2e; 
+        box-shadow: 0 0 0 2px rgba(74,144,217,0.2);
+    }
+    
+    .color-theme-btn .check {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 9px;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    
+    .color-theme-btn.active .check { opacity: 1; }
+    
+    .theme-select {
+        border: 1.5px solid #e8ecf0;
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #1a1a2e;
+        background: #fafbfc;
+        width: 100%;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    
+    .theme-select:focus {
+        border-color: var(--theme, #4a90d9);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(74,144,217,0.08);
+    }
+    
+    /* Top Bar - Minimalist */
+    .top-bar {
+        background: white;
+        border-bottom: 1px solid #e8ecf0;
+        padding: 10px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+    }
+    
+    .top-bar .title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #1a1a2e;
+        letter-spacing: -0.3px;
+    }
+    
+    .top-bar .title i {
+        color: var(--theme, #4a90d9);
+        margin-right: 8px;
+    }
+    
+    .top-bar .title .badge {
+        font-size: 10px;
+        font-weight: 500;
+        color: #8b8b8b;
+        background: #f5f5f7;
+        padding: 2px 10px;
+        border-radius: 12px;
+        margin-left: 8px;
+    }
+    
+    .top-bar .actions {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-action {
+        padding: 6px 16px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .btn-action.outline {
+        background: white;
+        border: 1.5px solid #e8ecf0;
+        color: #4a4a4a;
+    }
+    
+    .btn-action.outline:hover {
+        background: #f5f5f7;
+        border-color: #d0d0d0;
+    }
+    
+    .btn-action.primary {
+        background: var(--theme, #4a90d9);
         color: white;
     }
     
-    .preview-header {
-        transition: all 0.3s ease;
+    .btn-action.primary:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
     }
     
-    .section-divider {
+    .btn-action i { font-size: 12px; }
+    
+    /* Preview Styles - Beleqet Style */
+    .preview-name {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a1a2e;
+        letter-spacing: -0.5px;
+        margin: 0;
+    }
+    
+    .preview-title {
+        font-size: 14px;
+        font-weight: 400;
+        color: #6b6b6b;
+        margin: 4px 0 8px;
+    }
+    
+    .preview-contact {
+        font-size: 12px;
+        color: #8b8b8b;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 16px;
+        margin-bottom: 16px;
+    }
+    
+    .preview-contact span {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .preview-contact i {
+        font-size: 11px;
+        color: #b0b0b0;
+        width: 14px;
+    }
+    
+    .preview-section-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: #1a1a2e;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 0 0 2px 0;
+    }
+    
+    .preview-divider {
         height: 2px;
-        background: linear-gradient(to right, var(--theme), transparent);
-        margin: 8px 0 16px;
+        background: var(--theme, #4a90d9);
+        width: 40px;
+        margin-bottom: 10px;
     }
     
-    .btn-add {
-        @apply text-blue-600 text-sm font-semibold hover:text-blue-800 transition-colors flex items-center gap-1;
+    .preview-experience-item {
+        margin-bottom: 12px;
     }
     
-    .scrollbar-thin::-webkit-scrollbar { width: 6px; }
-    .scrollbar-thin::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
-    .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    .preview-experience-item .exp-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
     
-    @media print {
-        body * { visibility: hidden; }
-        .resume-preview, .resume-preview * { visibility: visible; }
-        .resume-preview { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; }
+    .preview-experience-item .exp-company {
+        font-weight: 600;
+        font-size: 13px;
+        color: #1a1a2e;
+    }
+    
+    .preview-experience-item .exp-position {
+        font-weight: 500;
+        font-size: 12px;
+        color: #4a4a4a;
+    }
+    
+    .preview-experience-item .exp-date {
+        font-size: 11px;
+        color: #8b8b8b;
+    }
+    
+    .preview-experience-item .exp-desc {
+        font-size: 12px;
+        color: #6b6b6b;
+        line-height: 1.5;
+        margin: 4px 0 0;
+    }
+    
+    .preview-skill-tag {
+        display: inline-block;
+        background: #f5f5f7;
+        color: #4a4a4a;
+        padding: 2px 12px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+        margin: 2px 4px 2px 0;
+    }
+    
+    .preview-language-tag {
+        display: inline-block;
+        background: #f5f5f7;
+        color: #4a4a4a;
+        padding: 2px 12px;
+        border-radius: 4px;
+        font-size: 11px;
+        margin: 2px 4px 2px 0;
+        font-weight: 500;
+    }
+    
+    .preview-cert-tag {
+        display: inline-block;
+        background: #fdf0ee;
+        color: #c0392b;
+        padding: 2px 12px;
+        border-radius: 4px;
+        font-size: 11px;
+        margin: 2px 4px 2px 0;
+        font-weight: 500;
+    }
+    
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #b0b0b0;
+        text-align: center;
+        padding: 60px 20px;
+    }
+    
+    .empty-state i { font-size: 48px; margin-bottom: 12px; opacity: 0.2; }
+    .empty-state h4 { font-size: 16px; font-weight: 600; color: #8b8b8b; margin-bottom: 4px; }
+    .empty-state p { font-size: 12px; color: #b0b0b0; }
+    
+    /* Social Input with prefix */
+    .social-input-wrapper {
+        position: relative;
+    }
+    
+    .social-input-wrapper .social-prefix {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 10px;
+        color: #b0b0b0;
+        font-weight: 400;
+        pointer-events: none;
+    }
+    
+    .social-input-wrapper .form-input {
+        padding-left: 28px;
+        font-size: 12px;
+    }
+    
+    .optional-helper {
+        font-size: 10px;
+        color: #b0b0b0;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-bottom: 10px;
+    }
+    
+    .optional-helper i {
+        font-size: 10px;
+        color: #c0c0c0;
+    }
+    
+    @media (max-width: 1024px) {
+        .main-layout {
+            flex-direction: column;
+            overflow: visible;
+            height: auto;
+        }
+        .form-panel { 
+            width: 100%; 
+            height: auto; 
+            max-height: 500px; 
+            border-right: none; 
+            border-bottom: 1px solid #e8ecf0;
+        }
+        .preview-panel { 
+            height: auto; 
+            min-height: 500px;
+            padding: 16px;
+        }
+        .resume-preview { 
+            width: 100%; 
+            min-height: 400px; 
+            padding: 28px; 
+        }
+        .form-grid-2 { grid-template-columns: 1fr; }
+        .form-grid-3 { grid-template-columns: 1fr 1fr; }
+        .top-bar { 
+            flex-wrap: wrap; 
+            gap: 8px; 
+            padding: 8px 12px; 
+        }
+        body { overflow: auto; }
+        .resume-builder-container { height: auto; }
+    }
+    
+    @media (max-width: 640px) {
+        .form-panel { padding: 12px; max-height: 400px; }
+        .preview-panel { padding: 10px; min-height: 400px; }
+        .resume-preview { padding: 20px; }
+        .top-bar .title { font-size: 13px; }
+        .top-bar .title .badge { display: none; }
+        .btn-action { padding: 4px 10px; font-size: 11px; }
+        .form-grid-3 { grid-template-columns: 1fr; }
+        .preview-name { font-size: 22px; }
     }
 </style>
 @endpush
 
 @section('content')
-<div class="min-h-screen bg-gray-100">
+<div class="resume-builder-container">
+
     <!-- Top Bar -->
-    <div class="bg-white border-b sticky top-16 z-40 shadow-sm">
-        <div class="max-w-full mx-auto px-6 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-4">
-                <h1 class="text-xl font-extrabold text-gray-900">
-                    <i class="fas fa-file-alt text-blue-600 mr-2"></i>Resume Builder
-                </h1>
-                <span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">Live Preview</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <button onclick="window.print()" class="px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
-                    <i class="fas fa-print mr-2"></i> Print
-                </button>
-                <button onclick="downloadPDF()" class="px-5 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-500/25">
-                    <i class="fas fa-download mr-2"></i> Download PDF
-                </button>
-            </div>
+    <div class="top-bar">
+        <div class="title">
+            <i class="fas fa-file-alt"></i> Resume Builder
+            <span class="badge">Preview</span>
+        </div>
+        <div class="actions">
+            <button onclick="window.print()" class="btn-action outline">
+                <i class="fas fa-print"></i> Print
+            </button>
+            <button onclick="downloadPDF()" class="btn-action primary">
+                <i class="fas fa-download"></i> Download
+            </button>
         </div>
     </div>
 
-    <div class="flex flex-col lg:flex-row gap-0">
-        <!-- LEFT: Form Panel -->
-        <div class="lg:w-[480px] xl:w-[520px] bg-white border-r overflow-y-auto scrollbar-thin" style="height: calc(100vh - 140px);">
-            <div class="p-5 space-y-4">
+    <!-- Main Layout -->
+    <div class="main-layout">
+
+        <!-- FORM PANEL -->
+        <div class="form-panel">
+
+            <!-- Theme Settings -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h3>Resume Settings</h3>
+                    <span class="badge">Theme</span>
+                </div>
                 
-                <!-- Theme Settings -->
-                <div class="form-section">
-                    <h3 class="font-bold text-sm text-gray-700 mb-3 flex items-center gap-2">
-                        <i class="fas fa-palette text-blue-500"></i> Theme Settings
-                    </h3>
-                    <div class="flex flex-wrap gap-3 mb-3">
-                        <div class="color-dot active" style="background:#2563eb" onclick="setTheme('#2563eb', this)" title="Blue"></div>
-                        <div class="color-dot" style="background:#059669" onclick="setTheme('#059669', this)" title="Green"></div>
-                        <div class="color-dot" style="background:#7c3aed" onclick="setTheme('#7c3aed', this)" title="Purple"></div>
-                        <div class="color-dot" style="background:#dc2626" onclick="setTheme('#dc2626', this)" title="Red"></div>
-                        <div class="color-dot" style="background:#0f172a" onclick="setTheme('#0f172a', this)" title="Dark"></div>
-                        <div class="color-dot" style="background:#ea580c" onclick="setTheme('#ea580c', this)" title="Orange"></div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">Font</label>
-                            <select onchange="updatePreview()" id="fontSelect" class="form-input py-2 text-xs">
-                                <option value="Roboto">Roboto</option>
-                                <option value="Lato">Lato</option>
-                                <option value="Montserrat">Montserrat</option>
-                                <option value="Open Sans">Open Sans</option>
-                                <option value="Raleway">Raleway</option>
-                                <option value="Merriweather">Merriweather</option>
-                                <option value="Playfair Display">Playfair Display</option>
-                                <option value="Caladea">Caladea</option>
-                                <option value="Lora">Lora</option>
-                                <option value="Roboto Slab">Roboto Slab</option>
-                            </select>
+                <div class="form-group">
+                    <label class="form-label">Theme Color</label>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                        <div class="color-theme-btn active" style="background: #4a90d9;" onclick="setTheme('#4a90d9', this)">
+                            <span class="check">✓</span>
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">Size</label>
-                            <select onchange="updatePreview()" id="fontSize" class="form-input py-2 text-xs">
-                                <option value="compact">Compact</option>
-                                <option value="standard" selected>Standard</option>
-                                <option value="large">Large</option>
-                            </select>
+                        <div class="color-theme-btn" style="background: #2c3e50;" onclick="setTheme('#2c3e50', this)">
+                            <span class="check">✓</span>
+                        </div>
+                        <div class="color-theme-btn" style="background: #27ae60;" onclick="setTheme('#27ae60', this)">
+                            <span class="check">✓</span>
+                        </div>
+                        <div class="color-theme-btn" style="background: #8e44ad;" onclick="setTheme('#8e44ad', this)">
+                            <span class="check">✓</span>
+                        </div>
+                        <div class="color-theme-btn" style="background: #e67e22;" onclick="setTheme('#e67e22', this)">
+                            <span class="check">✓</span>
+                        </div>
+                        <div class="color-theme-btn" style="background: #c0392b;" onclick="setTheme('#c0392b', this)">
+                            <span class="check">✓</span>
+                        </div>
+                        <div class="color-theme-btn" style="background: #1abc9c;" onclick="setTheme('#1abc9c', this)">
+                            <span class="check">✓</span>
                         </div>
                     </div>
                 </div>
-
-                <!-- Personal Info -->
-                <div class="form-section">
-                    <h3 class="font-bold text-sm text-gray-700 mb-3 flex items-center gap-2">
-                        <i class="fas fa-user text-blue-500"></i> Personal Information
-                    </h3>
-                    <div class="space-y-2.5">
-                        <input type="text" oninput="updatePreview()" id="fullName" class="form-input" placeholder="Full Name *">
-                        <input type="text" oninput="updatePreview()" id="jobTitle" class="form-input" placeholder="Professional Title (e.g., Senior Engineer)">
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="email" oninput="updatePreview()" id="email" class="form-input" placeholder="Email">
-                            <input type="text" oninput="updatePreview()" id="phone" class="form-input" placeholder="Phone">
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="text" oninput="updatePreview()" id="location" class="form-input" placeholder="Location">
-                            <input type="text" oninput="updatePreview()" id="website" class="form-input" placeholder="LinkedIn / Website">
-                        </div>
-                        <textarea oninput="updatePreview()" id="summary" rows="3" class="form-input" placeholder="Professional Summary - Brief overview of your experience and goals..."></textarea>
+                
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Font</label>
+                        <select id="fontSelect" onchange="updatePreview()" class="theme-select">
+                            <option value="Inter">Inter</option>
+                            <option value="Roboto">Roboto</option>
+                            <option value="Lato">Lato</option>
+                            <option value="Montserrat">Montserrat</option>
+                            <option value="Open Sans">Open Sans</option>
+                            <option value="Raleway">Raleway</option>
+                            <option value="Merriweather">Merriweather</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Size</label>
+                        <select id="fontSize" onchange="updatePreview()" class="theme-select">
+                            <option value="compact">Compact</option>
+                            <option value="standard" selected>Standard</option>
+                            <option value="large">Large</option>
+                        </select>
                     </div>
                 </div>
+            </div>
 
-                <!-- Experience -->
-                <div class="form-section">
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="font-bold text-sm text-gray-700 flex items-center gap-2">
-                            <i class="fas fa-briefcase text-purple-500"></i> Work Experience
-                        </h3>
-                        <button onclick="addExperience()" class="btn-add"><i class="fas fa-plus-circle"></i> Add</button>
+            <div class="form-divider"></div>
+
+            <!-- Personal Information -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h3>Personal Information</h3>
+                    <span class="badge">Required</span>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Full Name <span class="required">*</span></label>
+                    <input type="text" id="fullName" oninput="updatePreview()" class="form-input" placeholder="Sal Khan" value="Sal Khan">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Cover Letter / Title</label>
+                    <input type="text" id="jobTitle" oninput="updatePreview()" class="form-input" placeholder="Entrepreneur and educator..." value="Entrepreneur and educator obsessed with making education free for anyone">
+                </div>
+                
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="email" oninput="updatePreview()" class="form-input" placeholder="hello@email.com" value="hello@beleqetjob.com">
                     </div>
-                    <div id="expContainer" class="space-y-3">
-                        <div class="exp-item bg-gray-50 rounded-xl p-3 border border-gray-100">
-                            <div class="space-y-2">
-                                <input type="text" oninput="updatePreview()" class="exp-company form-input py-2 text-xs" placeholder="Company Name">
-                                <input type="text" oninput="updatePreview()" class="exp-position form-input py-2 text-xs" placeholder="Job Title">
-                                <div class="grid grid-cols-2 gap-2">
-                                    <input type="text" oninput="updatePreview()" class="exp-from form-input py-2 text-xs" placeholder="Start (e.g., Jan 2020)">
-                                    <input type="text" oninput="updatePreview()" class="exp-to form-input py-2 text-xs" placeholder="End (e.g., Present)">
-                                </div>
-                                <textarea oninput="updatePreview()" class="exp-desc form-input py-2 text-xs" rows="2" placeholder="Key responsibilities & achievements..."></textarea>
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="text" id="phone" oninput="updatePreview()" class="form-input" placeholder="+251 911 234 567" value="+251 911 234 567">
+                    </div>
+                </div>
+                
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Location</label>
+                        <input type="text" id="location" oninput="updatePreview()" class="form-input" placeholder="Addis Ababa, Ethiopia" value="Addis Ababa, Ethiopia">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Website</label>
+                        <input type="text" id="website" oninput="updatePreview()" class="form-input" placeholder="linkedin.com/company/..." value="linkedin.com/company/beleqetacademy">
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Professional Summary</label>
+                    <textarea id="summary" oninput="updatePreview()" class="form-input textarea" rows="2" placeholder="Brief overview..."></textarea>
+                </div>
+            </div>
+
+            <div class="form-divider"></div>
+
+            <!-- Social Media Links - Optional -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h3>Social Media</h3>
+                    <span class="badge optional">Optional</span>
+                </div>
+                
+                <div class="optional-helper">
+                    <i class="fas fa-info-circle"></i> Add your social profiles
+                </div>
+                
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label"><i class="fab fa-linkedin-in" style="color:#0A66C2;"></i> LinkedIn</label>
+                        <div class="social-input-wrapper">
+                            <span class="social-prefix">linkedin.com/in/</span>
+                            <input type="text" id="linkedin" oninput="updatePreview()" class="form-input" placeholder="username">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fab fa-github" style="color:#181717;"></i> GitHub</label>
+                        <div class="social-input-wrapper">
+                            <span class="social-prefix">github.com/</span>
+                            <input type="text" id="github" oninput="updatePreview()" class="form-input" placeholder="username">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-grid-2" style="margin-top: 8px;">
+                    <div class="form-group">
+                        <label class="form-label"><i class="fab fa-x-twitter"></i> Twitter / X</label>
+                        <div class="social-input-wrapper">
+                            <span class="social-prefix">twitter.com/</span>
+                            <input type="text" id="twitter" oninput="updatePreview()" class="form-input" placeholder="username">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label"><i class="fab fa-facebook" style="color:#1877F2;"></i> Facebook</label>
+                        <div class="social-input-wrapper">
+                            <span class="social-prefix">facebook.com/</span>
+                            <input type="text" id="facebook" oninput="updatePreview()" class="form-input" placeholder="username">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-divider"></div>
+
+            <!-- Work Experience -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h3>Work Experience</h3>
+                    <button onclick="addExperience()" class="btn-add-item">
+                        <i class="fas fa-plus"></i> Add
+                    </button>
+                </div>
+                
+                <div id="expContainer">
+                    <div class="item-card">
+                        <div class="item-actions">
+                            <button onclick="this.closest('.item-card').remove(); updatePreview();" class="btn-remove-item">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Company</label>
+                            <input type="text" oninput="updatePreview()" class="exp-company form-input" placeholder="Company Name" value="Beleqet Academy">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Job Title</label>
+                            <input type="text" oninput="updatePreview()" class="exp-position form-input" placeholder="Job Title" value="Software Engineer">
+                        </div>
+                        <div class="form-grid-2" style="margin-bottom: 0;">
+                            <div class="form-group">
+                                <label class="form-label">Start</label>
+                                <input type="text" oninput="updatePreview()" class="exp-from form-input" placeholder="Jun 2022" value="Jun 2022">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">End</label>
+                                <input type="text" oninput="updatePreview()" class="exp-to form-input" placeholder="Present" value="Present">
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Education -->
-                <div class="form-section">
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="font-bold text-sm text-gray-700 flex items-center gap-2">
-                            <i class="fas fa-graduation-cap text-green-500"></i> Education
-                        </h3>
-                        <button onclick="addEducation()" class="btn-add"><i class="fas fa-plus-circle"></i> Add</button>
-                    </div>
-                    <div id="eduContainer" class="space-y-3">
-                        <div class="edu-item bg-gray-50 rounded-xl p-3 border border-gray-100">
-                            <div class="space-y-2">
-                                <input type="text" oninput="updatePreview()" class="edu-school form-input py-2 text-xs" placeholder="Institution">
-                                <input type="text" oninput="updatePreview()" class="edu-degree form-input py-2 text-xs" placeholder="Degree & Major">
-                                <div class="grid grid-cols-2 gap-2">
-                                    <input type="text" oninput="updatePreview()" class="edu-date form-input py-2 text-xs" placeholder="Year">
-                                    <input type="text" oninput="updatePreview()" class="edu-gpa form-input py-2 text-xs" placeholder="GPA (optional)">
-                                </div>
-                            </div>
+            <div class="form-divider"></div>
+
+            <!-- Education -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h3>Education</h3>
+                    <button onclick="addEducation()" class="btn-add-item">
+                        <i class="fas fa-plus"></i> Add
+                    </button>
+                </div>
+                
+                <div id="eduContainer">
+                    <div class="item-card">
+                        <div class="item-actions">
+                            <button onclick="this.closest('.item-card').remove(); updatePreview();" class="btn-remove-item">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">School</label>
+                            <input type="text" oninput="updatePreview()" class="edu-school form-input" placeholder="School Name">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">Date</label>
+                            <input type="text" oninput="updatePreview()" class="edu-date form-input" placeholder="2020 - 2024">
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Skills -->
-                <div class="form-section">
-                    <h3 class="font-bold text-sm text-gray-700 mb-3 flex items-center gap-2">
-                        <i class="fas fa-star text-yellow-500"></i> Skills
-                    </h3>
-                    <textarea oninput="updatePreview()" id="skillsInput" rows="2" class="form-input" placeholder="Skills separated by commas...&#10;e.g., Project Management, AutoCAD, Leadership"></textarea>
-                    
-                    <div class="mt-3">
-                        <label class="block text-xs font-semibold text-gray-600 mb-2">Featured Skills (with proficiency)</label>
-                        <div id="featuredSkills" class="space-y-2"></div>
-                        <div class="flex gap-2 mt-2">
-                            <input type="text" id="newSkill" class="form-input py-2 text-xs flex-1" placeholder="Add featured skill..." onkeypress="if(event.key==='Enter'){addFeaturedSkill();return false}">
-                            <button onclick="addFeaturedSkill()" class="px-3 py-2 bg-blue-500 text-white rounded-xl text-xs font-bold hover:bg-blue-600">Add</button>
+            <div class="form-divider"></div>
+
+            <!-- Projects -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h3>Projects</h3>
+                    <button onclick="addProject()" class="btn-add-item">
+                        <i class="fas fa-plus"></i> Add
+                    </button>
+                </div>
+                
+                <div id="projectContainer">
+                    <div class="item-card">
+                        <div class="item-actions">
+                            <button onclick="this.closest('.item-card').remove(); updatePreview();" class="btn-remove-item">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Project Name</label>
+                            <input type="text" oninput="updatePreview()" class="project-name form-input" placeholder="Project Name">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">Description</label>
+                            <textarea oninput="updatePreview()" class="project-desc form-input textarea" rows="2" placeholder="Project description..."></textarea>
                         </div>
                     </div>
                 </div>
-
-                <!-- Languages -->
-                <div class="form-section">
-                    <h3 class="font-bold text-sm text-gray-700 mb-3 flex items-center gap-2">
-                        <i class="fas fa-language text-indigo-500"></i> Languages
-                    </h3>
-                    <textarea oninput="updatePreview()" id="languagesInput" rows="2" class="form-input" placeholder="Languages...&#10;e.g., Amharic (Native), English (Fluent), French (Intermediate)"></textarea>
-                </div>
-
-                <!-- Certifications -->
-                <div class="form-section">
-                    <h3 class="font-bold text-sm text-gray-700 mb-3 flex items-center gap-2">
-                        <i class="fas fa-certificate text-orange-500"></i> Certifications
-                    </h3>
-                    <textarea oninput="updatePreview()" id="certsInput" rows="2" class="form-input" placeholder="Certifications...&#10;e.g., PMP, EAEA Registered, NEBOSH"></textarea>
-                </div>
-
             </div>
+
+            <div class="form-divider"></div>
+
+            <!-- Skills -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h3>Skills</h3>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Skills (comma separated)</label>
+                    <textarea id="skillsInput" oninput="updatePreview()" class="form-input textarea" rows="2" placeholder="e.g., JavaScript, Python, React"></textarea>
+                </div>
+            </div>
+
         </div>
 
-        <!-- RIGHT: Live Preview -->
-        <div class="flex-1 bg-gray-200 flex items-start justify-center p-6 overflow-y-auto" style="height: calc(100vh - 140px);">
-            <div id="resumePreview" class="resume-preview" style="font-family: 'Roboto', sans-serif;">
-                <div id="previewContent" class="p-10" style="min-height: 800px;">
-                    <!-- Empty State -->
-                    <div class="flex flex-col items-center justify-center h-full text-gray-300 py-32">
-                        <i class="fas fa-file-alt text-6xl mb-4"></i>
-                        <p class="text-lg font-medium">Resume Preview</p>
-                        <p class="text-sm">Start filling the form to see your resume</p>
+        <!-- PREVIEW PANEL -->
+        <div class="preview-panel">
+            <div id="resumePreview" class="resume-preview" style="font-family: 'Inter', sans-serif;">
+                <div id="previewContent">
+                    <div class="empty-state">
+                        <i class="fas fa-file-alt"></i>
+                        <h4>Resume Preview</h4>
+                        <p>Fill in the form to see your resume</p>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
 </div>
 
 <script>
-let themeColor = '#2563eb';
+let themeColor = '#4a90d9';
 let featuredSkillsData = [];
 
 function setTheme(color, el) {
     themeColor = color;
     document.documentElement.style.setProperty('--theme', color);
-    document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+    document.querySelectorAll('.color-theme-btn').forEach(d => d.classList.remove('active'));
     if (el) el.classList.add('active');
     updatePreview();
 }
 
-function addFeaturedSkill() {
-    const input = document.getElementById('newSkill');
-    const name = input.value.trim();
-    if (!name) return;
-    featuredSkillsData.push({name, level: 5});
-    input.value = '';
-    renderFeaturedSkills();
-    updatePreview();
-}
-
-function renderFeaturedSkills() {
-    const container = document.getElementById('featuredSkills');
-    container.innerHTML = featuredSkillsData.map((s, i) => `
-        <div class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
-            <span class="text-xs font-semibold text-gray-700">${s.name}</span>
-            <div class="flex items-center gap-2">
-                <div class="flex gap-0.5">
-                    ${[1,2,3,4,5].map(l => `
-                        <span class="skill-circle ${l <= s.level ? 'filled' : ''}" 
-                              onclick="setSkillLevel(${i}, ${l})" 
-                              style="${l <= s.level ? 'background:'+themeColor+';border-color:'+themeColor : ''}">
-                            ●
-                        </span>
-                    `).join('')}
+function addExperience() {
+    const container = document.getElementById('expContainer');
+    const html = `
+        <div class="item-card">
+            <div class="item-actions">
+                <button onclick="this.closest('.item-card').remove(); updatePreview();" class="btn-remove-item">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Company</label>
+                <input type="text" oninput="updatePreview()" class="exp-company form-input" placeholder="Company Name">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Job Title</label>
+                <input type="text" oninput="updatePreview()" class="exp-position form-input" placeholder="Job Title">
+            </div>
+            <div class="form-grid-2" style="margin-bottom: 0;">
+                <div class="form-group">
+                    <label class="form-label">Start</label>
+                    <input type="text" oninput="updatePreview()" class="exp-from form-input" placeholder="Jun 2022">
                 </div>
-                <button onclick="featuredSkillsData.splice(${i},1);renderFeaturedSkills();updatePreview()" class="text-red-400 hover:text-red-600 text-xs">×</button>
+                <div class="form-group">
+                    <label class="form-label">End</label>
+                    <input type="text" oninput="updatePreview()" class="exp-to form-input" placeholder="Present">
+                </div>
             </div>
         </div>
-    `).join('');
-}
-
-function setSkillLevel(index, level) {
-    featuredSkillsData[index].level = level;
-    renderFeaturedSkills();
-    updatePreview();
-}
-
-function addExperience() {
-    document.getElementById('expContainer').insertAdjacentHTML('beforeend', `
-        <div class="exp-item bg-gray-50 rounded-xl p-3 border border-gray-100">
-            <button onclick="this.parentElement.remove();updatePreview()" class="float-right text-red-400 hover:text-red-600 text-xs mb-1">× Remove</button>
-            <div class="space-y-2">
-                <input type="text" oninput="updatePreview()" class="exp-company form-input py-2 text-xs" placeholder="Company Name">
-                <input type="text" oninput="updatePreview()" class="exp-position form-input py-2 text-xs" placeholder="Job Title">
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="text" oninput="updatePreview()" class="exp-from form-input py-2 text-xs" placeholder="Start">
-                    <input type="text" oninput="updatePreview()" class="exp-to form-input py-2 text-xs" placeholder="End">
-                </div>
-                <textarea oninput="updatePreview()" class="exp-desc form-input py-2 text-xs" rows="2" placeholder="Description..."></textarea>
-            </div>
-        </div>`);
+    `;
+    container.insertAdjacentHTML('beforeend', html);
 }
 
 function addEducation() {
-    document.getElementById('eduContainer').insertAdjacentHTML('beforeend', `
-        <div class="edu-item bg-gray-50 rounded-xl p-3 border border-gray-100">
-            <button onclick="this.parentElement.remove();updatePreview()" class="float-right text-red-400 hover:text-red-600 text-xs mb-1">× Remove</button>
-            <div class="space-y-2">
-                <input type="text" oninput="updatePreview()" class="edu-school form-input py-2 text-xs" placeholder="Institution">
-                <input type="text" oninput="updatePreview()" class="edu-degree form-input py-2 text-xs" placeholder="Degree & Major">
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="text" oninput="updatePreview()" class="edu-date form-input py-2 text-xs" placeholder="Year">
-                    <input type="text" oninput="updatePreview()" class="edu-gpa form-input py-2 text-xs" placeholder="GPA">
-                </div>
+    const container = document.getElementById('eduContainer');
+    const html = `
+        <div class="item-card">
+            <div class="item-actions">
+                <button onclick="this.closest('.item-card').remove(); updatePreview();" class="btn-remove-item">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-        </div>`);
+            <div class="form-group">
+                <label class="form-label">School</label>
+                <input type="text" oninput="updatePreview()" class="edu-school form-input" placeholder="School Name">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Date</label>
+                <input type="text" oninput="updatePreview()" class="edu-date form-input" placeholder="2020 - 2024">
+            </div>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', html);
+}
+
+function addProject() {
+    const container = document.getElementById('projectContainer');
+    const html = `
+        <div class="item-card">
+            <div class="item-actions">
+                <button onclick="this.closest('.item-card').remove(); updatePreview();" class="btn-remove-item">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Project Name</label>
+                <input type="text" oninput="updatePreview()" class="project-name form-input" placeholder="Project Name">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Description</label>
+                <textarea oninput="updatePreview()" class="project-desc form-input textarea" rows="2" placeholder="Project description..."></textarea>
+            </div>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', html);
 }
 
 function updatePreview() {
@@ -358,130 +987,164 @@ function updatePreview() {
     const website = document.getElementById('website').value;
     const summary = document.getElementById('summary').value;
     const skills = document.getElementById('skillsInput').value;
-    const languages = document.getElementById('languagesInput').value;
-    const certs = document.getElementById('certsInput').value;
-    const font = document.getElementById('fontSelect').value || 'Roboto';
+    const font = document.getElementById('fontSelect').value || 'Inter';
     const fontSize = document.getElementById('fontSize').value || 'standard';
     
-    const sizeMap = {compact: {base: 10, h1: 22, h3: 13}, standard: {base: 11.5, h1: 26, h3: 15}, large: {base: 13, h1: 30, h3: 17}};
-    const s = sizeMap[fontSize];
+    // Social Media
+    const linkedin = document.getElementById('linkedin').value;
+    const github = document.getElementById('github').value;
+    const twitter = document.getElementById('twitter').value;
+    const facebook = document.getElementById('facebook').value;
+    
+    const sizeMap = {
+        compact: { base: 10, h1: 24, h3: 11, spacing: 8 },
+        standard: { base: 12, h1: 28, h3: 12, spacing: 12 },
+        large: { base: 14, h1: 32, h3: 14, spacing: 16 }
+    };
+    const s = sizeMap[fontSize] || sizeMap.standard;
     
     // Collect experiences
     let expHTML = '';
-    document.querySelectorAll('.exp-item').forEach(item => {
+    document.querySelectorAll('#expContainer .item-card').forEach(item => {
         const company = item.querySelector('.exp-company')?.value;
         const position = item.querySelector('.exp-position')?.value;
         const from = item.querySelector('.exp-from')?.value;
         const to = item.querySelector('.exp-to')?.value;
-        const desc = item.querySelector('.exp-desc')?.value;
         if (company || position) {
             expHTML += `
-                <div style="margin-bottom:14px;padding-left:14px;border-left:3px solid ${themeColor}">
-                    <div style="display:flex;justify-content:space-between;align-items:baseline">
-                        <strong style="font-size:${s.base+1}px">${position || 'Position'}</strong>
-                        <span style="color:#888;font-size:${s.base-1}px">${from || ''} ${from&&to?'-':''} ${to || ''}</span>
+                <div class="preview-experience-item">
+                    <div class="exp-header">
+                        <span class="exp-company">${company || 'Company'}</span>
+                        <span class="exp-date">${from || ''} ${from && to ? '—' : ''} ${to || ''}</span>
                     </div>
-                    <div style="color:${themeColor};font-weight:600;font-size:${s.base}px;margin-top:1px">${company || 'Company'}</div>
-                    ${desc ? `<p style="color:#555;font-size:${s.base-1}px;margin-top:4px;line-height:1.5">${desc}</p>` : ''}
+                    <div class="exp-position">${position || 'Position'}</div>
                 </div>`;
         }
     });
     
     // Collect education
     let eduHTML = '';
-    document.querySelectorAll('.edu-item').forEach(item => {
+    document.querySelectorAll('#eduContainer .item-card').forEach(item => {
         const school = item.querySelector('.edu-school')?.value;
-        const degree = item.querySelector('.edu-degree')?.value;
         const date = item.querySelector('.edu-date')?.value;
-        const gpa = item.querySelector('.edu-gpa')?.value;
-        if (school || degree) {
+        if (school) {
             eduHTML += `
-                <div style="margin-bottom:8px">
-                    <strong style="font-size:${s.base}px">${degree || 'Degree'}</strong>${gpa ? ' <span style="color:#888;font-size:'+(s.base-1)+'px">| GPA: '+gpa+'</span>' : ''}
-                    <br><span style="color:#666;font-size:${s.base-1}px">${school || 'Institution'} ${date ? '('+date+')' : ''}</span>
+                <div class="preview-experience-item" style="margin-bottom:6px;">
+                    <div class="exp-header">
+                        <span class="exp-company">${school}</span>
+                        <span class="exp-date">${date || ''}</span>
+                    </div>
                 </div>`;
         }
     });
     
-    // Featured skills
-    let featHTML = featuredSkillsData.map(sk => {
-        const pct = (sk.level/5)*100;
-        return `
-            <div style="margin-bottom:6px">
-                <div style="display:flex;justify-content:space-between;font-size:${s.base-1}px">
-                    <span>${sk.name}</span><span style="color:#888">${sk.level}/5</span>
-                </div>
-                <div style="background:#e5e7eb;height:5px;border-radius:3px;margin-top:2px">
-                    <div style="background:${themeColor};height:5px;border-radius:3px;width:${pct}%"></div>
-                </div>
-            </div>`;
-    }).join('');
+    // Collect projects
+    let projectHTML = '';
+    document.querySelectorAll('#projectContainer .item-card').forEach(item => {
+        const name2 = item.querySelector('.project-name')?.value;
+        const desc = item.querySelector('.project-desc')?.value;
+        if (name2) {
+            projectHTML += `
+                <div class="preview-experience-item" style="margin-bottom:6px;">
+                    <div class="exp-header">
+                        <span class="exp-company">${name2}</span>
+                    </div>
+                    ${desc ? `<div class="exp-desc">${desc}</div>` : ''}
+                </div>`;
+        }
+    });
     
     // Skills tags
-    let skillsTags = skills ? skills.split(',').map(s => 
-        `<span style="display:inline-block;background:${themeColor}15;color:${themeColor};padding:2px 10px;border-radius:12px;font-size:${s.base-2}px;font-weight:600;margin:2px">${s.trim()}</span>`
-    ).join(' ') : '';
+    let skillsTags = '';
+    if (skills) {
+        skillsTags = skills.split(',').filter(s => s.trim()).map(s => 
+            `<span class="preview-skill-tag">${s.trim()}</span>`
+        ).join(' ');
+    }
     
-    const contactParts = [email, phone, location, website].filter(Boolean).join(' <span style="color:#ccc;margin:0 4px">|</span> ');
+    // Social Media Links
+    let socialHTML = '';
+    const socialLinks = [];
+    if (linkedin) socialLinks.push(`<a href="https://linkedin.com/in/${linkedin}" target="_blank" class="preview-social-link" style="display:inline-flex;align-items:center;gap:4px;color:#6b6b6b;font-size:11px;text-decoration:none;margin:0 6px 0 0;padding:2px 8px;border-radius:4px;background:#f5f5f7;"><i class="fab fa-linkedin-in"></i> LinkedIn</a>`);
+    if (github) socialLinks.push(`<a href="https://github.com/${github}" target="_blank" class="preview-social-link" style="display:inline-flex;align-items:center;gap:4px;color:#6b6b6b;font-size:11px;text-decoration:none;margin:0 6px 0 0;padding:2px 8px;border-radius:4px;background:#f5f5f7;"><i class="fab fa-github"></i> GitHub</a>`);
+    if (twitter) socialLinks.push(`<a href="https://twitter.com/${twitter}" target="_blank" class="preview-social-link" style="display:inline-flex;align-items:center;gap:4px;color:#6b6b6b;font-size:11px;text-decoration:none;margin:0 6px 0 0;padding:2px 8px;border-radius:4px;background:#f5f5f7;"><i class="fab fa-x-twitter"></i> Twitter</a>`);
+    if (facebook) socialLinks.push(`<a href="https://facebook.com/${facebook}" target="_blank" class="preview-social-link" style="display:inline-flex;align-items:center;gap:4px;color:#6b6b6b;font-size:11px;text-decoration:none;margin:0 6px 0 0;padding:2px 8px;border-radius:4px;background:#f5f5f7;"><i class="fab fa-facebook"></i> Facebook</a>`);
+    
+    if (socialLinks.length > 0) {
+        socialHTML = `
+            <div style="margin-top: ${s.spacing}px; padding-top: ${s.spacing}px; border-top: 1px solid #eef0f3; display:flex; flex-wrap:wrap; gap:4px;">
+                ${socialLinks.join('')}
+            </div>
+        `;
+    }
+    
+    const contactParts = [];
+    if (email) contactParts.push(`<span><i class="fas fa-envelope"></i> ${email}</span>`);
+    if (phone) contactParts.push(`<span><i class="fas fa-phone"></i> ${phone}</span>`);
+    if (location) contactParts.push(`<span><i class="fas fa-map-marker-alt"></i> ${location}</span>`);
+    if (website) contactParts.push(`<span><i class="fas fa-globe"></i> ${website}</span>`);
+    const contactStr = contactParts.join('');
+    
+    const hasContent = name || jobTitle || summary || expHTML || eduHTML || skills || projectHTML;
+    
+    if (!hasContent) {
+        document.getElementById('previewContent').innerHTML = `
+            <div class="empty-state" style="height:100%;">
+                <i class="fas fa-file-alt"></i>
+                <h4>Resume Preview</h4>
+                <p>Fill in the form to see your resume</p>
+            </div>
+        `;
+        return;
+    }
     
     document.getElementById('previewContent').innerHTML = `
-        <div style="font-family:'${font}',sans-serif;font-size:${s.base}px;color:#1e293b;line-height:1.5;max-width:100%">
+        <div style="font-family:'${font}',sans-serif; font-size:${s.base}px; color:#1a1a2e; line-height:1.5; max-width:100%;">
             
-            <!-- HEADER -->
-            <div style="text-align:center;margin-bottom:20px;padding-bottom:16px;border-bottom:3px solid ${themeColor}">
-                <h1 style="font-size:${s.h1}px;font-weight:800;margin:0;letter-spacing:-1px;color:#0f172a;text-transform:uppercase">${name}</h1>
-                ${jobTitle ? `<p style="font-size:${s.base+1}px;color:${themeColor};font-weight:500;margin:4px 0 8px">${jobTitle}</p>` : ''}
-                <p style="color:#64748b;font-size:${s.base-1}px;margin:0">${contactParts || 'Contact information'}</p>
-            </div>
+            <!-- Name -->
+            <div class="preview-name">${name}</div>
             
-            ${summary ? `
-            <div style="margin-bottom:18px">
-                <h3 style="color:${themeColor};font-size:${s.h3}px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Professional Summary</h3>
-                <div class="section-divider" style="height:2px;background:linear-gradient(to right,${themeColor},transparent);margin-bottom:10px"></div>
-                <p style="color:#475569;font-size:${s.base}px;line-height:1.6">${summary}</p>
-            </div>` : ''}
+            <!-- Cover Letter / Title -->
+            ${jobTitle ? `<div class="preview-title">${jobTitle}</div>` : ''}
             
+            <!-- Contact Info -->
+            ${contactStr ? `<div class="preview-contact">${contactStr}</div>` : ''}
+            
+            <!-- Work Experience -->
             ${expHTML ? `
-            <div style="margin-bottom:18px">
-                <h3 style="color:${themeColor};font-size:${s.h3}px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Work Experience</h3>
-                <div class="section-divider" style="height:2px;background:linear-gradient(to right,${themeColor},transparent);margin-bottom:10px"></div>
+            <div style="margin-top: ${s.spacing+4}px;">
+                <div class="preview-section-title">Work Experience</div>
+                <div class="preview-divider"></div>
                 ${expHTML}
             </div>` : ''}
             
+            <!-- Projects -->
+            ${projectHTML ? `
+            <div style="margin-top: ${s.spacing+4}px;">
+                <div class="preview-section-title">Projects</div>
+                <div class="preview-divider"></div>
+                ${projectHTML}
+            </div>` : ''}
+            
+            <!-- Education -->
             ${eduHTML ? `
-            <div style="margin-bottom:18px">
-                <h3 style="color:${themeColor};font-size:${s.h3}px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Education</h3>
-                <div class="section-divider" style="height:2px;background:linear-gradient(to right,${themeColor},transparent);margin-bottom:10px"></div>
+            <div style="margin-top: ${s.spacing+4}px;">
+                <div class="preview-section-title">Education</div>
+                <div class="preview-divider"></div>
                 ${eduHTML}
             </div>` : ''}
             
-            ${featHTML ? `
-            <div style="margin-bottom:18px">
-                <h3 style="color:${themeColor};font-size:${s.h3}px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Featured Skills</h3>
-                <div class="section-divider" style="height:2px;background:linear-gradient(to right,${themeColor},transparent);margin-bottom:10px"></div>
-                ${featHTML}
+            <!-- Skills -->
+            ${skillsTags ? `
+            <div style="margin-top: ${s.spacing+4}px;">
+                <div class="preview-section-title">Skills</div>
+                <div class="preview-divider"></div>
+                <div style="display:flex; flex-wrap:wrap; gap:2px;">${skillsTags}</div>
             </div>` : ''}
             
-            ${skills ? `
-            <div style="margin-bottom:18px">
-                <h3 style="color:${themeColor};font-size:${s.h3}px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Skills</h3>
-                <div class="section-divider" style="height:2px;background:linear-gradient(to right,${themeColor},transparent);margin-bottom:10px"></div>
-                <p style="line-height:2">${skillsTags}</p>
-            </div>` : ''}
+            <!-- Social Media -->
+            ${socialHTML}
             
-            ${languages ? `
-            <div style="margin-bottom:18px">
-                <h3 style="color:${themeColor};font-size:${s.h3}px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Languages</h3>
-                <div class="section-divider" style="height:2px;background:linear-gradient(to right,${themeColor},transparent);margin-bottom:10px"></div>
-                <p style="color:#475569;font-size:${s.base}px">${languages.replace(/\n/g, '<br>')}</p>
-            </div>` : ''}
-            
-            ${certs ? `
-            <div style="margin-bottom:18px">
-                <h3 style="color:${themeColor};font-size:${s.h3}px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Certifications</h3>
-                <div class="section-divider" style="height:2px;background:linear-gradient(to right,${themeColor},transparent);margin-bottom:10px"></div>
-                <p style="color:#475569;font-size:${s.base}px">${certs.replace(/\n/g, '<br>')}</p>
-            </div>` : ''}
         </div>
     `;
     
@@ -489,10 +1152,10 @@ function updatePreview() {
 }
 
 function downloadPDF() {
-    // Create a hidden form to submit for PDF generation
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = '{{ route("resume.generate") }}';
+    const previewHTML = document.getElementById('previewContent').innerHTML;
     form.innerHTML = `
         <input type="hidden" name="_token" value="{{ csrf_token() }}">
         <input type="hidden" name="full_name" value="${document.getElementById('fullName').value}">
@@ -500,6 +1163,17 @@ function downloadPDF() {
         <input type="hidden" name="theme_color" value="${themeColor}">
         <input type="hidden" name="font_family" value="${document.getElementById('fontSelect').value}">
         <input type="hidden" name="font_size" value="${document.getElementById('fontSize').value}">
+        <input type="hidden" name="job_title" value="${document.getElementById('jobTitle').value}">
+        <input type="hidden" name="phone" value="${document.getElementById('phone').value}">
+        <input type="hidden" name="location" value="${document.getElementById('location').value}">
+        <input type="hidden" name="website" value="${document.getElementById('website').value}">
+        <input type="hidden" name="summary" value="${document.getElementById('summary').value}">
+        <input type="hidden" name="skills" value="${document.getElementById('skillsInput').value}">
+        <input type="hidden" name="linkedin" value="${document.getElementById('linkedin').value}">
+        <input type="hidden" name="github" value="${document.getElementById('github').value}">
+        <input type="hidden" name="twitter" value="${document.getElementById('twitter').value}">
+        <input type="hidden" name="facebook" value="${document.getElementById('facebook').value}">
+        <input type="hidden" name="preview_html" value="${encodeURIComponent(previewHTML)}">
     `;
     document.body.appendChild(form);
     form.submit();

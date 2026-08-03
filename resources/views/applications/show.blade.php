@@ -6,8 +6,8 @@
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-            <p class="text-sm text-gray-400 mb-1">{{ $application->vacancy->vacancy_number }}</p>
-            <h1 class="text-2xl font-extrabold text-[#0b3b5a]">{{ $application->vacancy->title }}</h1>
+            <p class="text-sm text-gray-400 mb-1">{{ $application->vacancy->vacancy_number ?? 'N/A' }}</p>
+            <h1 class="text-2xl font-extrabold text-[#0b3b5a]">{{ $application->vacancy->title ?? 'Position N/A' }}</h1>
             <p class="text-gray-500 text-sm mt-1">Application submitted on {{ $application->submitted_at ? $application->submitted_at->format('M d, Y') : $application->created_at->format('M d, Y') }}</p>
         </div>
         <span class="px-4 py-2 rounded-full text-sm font-bold
@@ -25,37 +25,52 @@
         <div class="md:col-span-2 space-y-6">
             <!-- Applicant Info -->
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200/70">
-                <h3 class="font-bold text-lg text-[#0b3b5a] mb-4"><i class="fas fa-user mr-2 text-[#0a7aa8]"></i> Applicant Information</h3>
+                <h3 class="font-bold text-lg text-[#0b3b5a] mb-4">
+                    <i class="fas fa-user mr-2 text-[#0a7aa8]"></i> Applicant Information
+                </h3>
+                @if($application->applicant)
                 <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div><span class="text-gray-500">Full Name:</span><p class="font-semibold">{{ $application->applicant->full_name_en }}</p></div>
-                    <div><span class="text-gray-500">Email:</span><p class="font-semibold">{{ $application->applicant->user->email }}</p></div>
-                    <div><span class="text-gray-500">Phone:</span><p class="font-semibold">{{ $application->applicant->user->phone }}</p></div>
-                    <div><span class="text-gray-500">Gender:</span><p class="font-semibold">{{ ucfirst($application->applicant->gender) }}</p></div>
-                    <div><span class="text-gray-500">Experience:</span><p class="font-semibold">{{ $application->applicant->total_years_exp }} years</p></div>
-                    <div><span class="text-gray-500">Nationality:</span><p class="font-semibold">{{ $application->applicant->nationality }}</p></div>
+                    <div><span class="text-gray-500">Full Name:</span><p class="font-semibold">{{ $application->applicant->full_name_en ?? 'N/A' }}</p></div>
+                    <div><span class="text-gray-500">Email:</span><p class="font-semibold">{{ $application->applicant->user->email ?? 'N/A' }}</p></div>
+                    <div><span class="text-gray-500">Phone:</span><p class="font-semibold">{{ $application->applicant->user->phone ?? 'N/A' }}</p></div>
+                    <div><span class="text-gray-500">Gender:</span><p class="font-semibold">{{ ucfirst($application->applicant->gender ?? 'N/A') }}</p></div>
+                    <div><span class="text-gray-500">Experience:</span><p class="font-semibold">{{ $application->applicant->total_years_exp ?? 0 }} years</p></div>
+                    <div><span class="text-gray-500">Nationality:</span><p class="font-semibold">{{ $application->applicant->nationality ?? 'N/A' }}</p></div>
                 </div>
+                @else
+                <p class="text-gray-400 text-sm">Applicant information not available.</p>
+                @endif
             </div>
 
             <!-- Position Details -->
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200/70">
-                <h3 class="font-bold text-lg text-[#0b3b5a] mb-4"><i class="fas fa-briefcase mr-2 text-[#0a7aa8]"></i> Position Details</h3>
+                <h3 class="font-bold text-lg text-[#0b3b5a] mb-4">
+                    <i class="fas fa-briefcase mr-2 text-[#0a7aa8]"></i> Position Details
+                </h3>
+                @if($application->vacancy)
                 <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div><span class="text-gray-500">Position:</span><p class="font-semibold">{{ $application->vacancy->title }}</p></div>
-                    <div><span class="text-gray-500">Department:</span><p class="font-semibold">{{ $application->vacancy->department }}</p></div>
-                    <div><span class="text-gray-500">Duty Station:</span><p class="font-semibold">{{ $application->vacancy->duty_station }}</p></div>
-                    <div><span class="text-gray-500">Type:</span><p class="font-semibold">{{ ucfirst($application->vacancy->employment_type) }}</p></div>
+                    <div><span class="text-gray-500">Position:</span><p class="font-semibold">{{ $application->vacancy->title ?? 'N/A' }}</p></div>
+                    <div><span class="text-gray-500">Department:</span><p class="font-semibold">{{ $application->vacancy->department ?? 'N/A' }}</p></div>
+                    <div><span class="text-gray-500">Duty Station:</span><p class="font-semibold">{{ $application->vacancy->duty_station ?? 'N/A' }}</p></div>
+                    <div><span class="text-gray-500">Type:</span><p class="font-semibold">{{ ucfirst($application->vacancy->employment_type ?? 'N/A') }}</p></div>
                 </div>
+                @else
+                <p class="text-gray-400 text-sm">Position information not available.</p>
+                @endif
             </div>
 
             <!-- Education -->
+            @if($application->applicant && $application->applicant->educationHistories)
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200/70">
-                <h3 class="font-bold text-lg text-[#0b3b5a] mb-4"><i class="fas fa-graduation-cap mr-2 text-[#0a7aa8]"></i> Education</h3>
+                <h3 class="font-bold text-lg text-[#0b3b5a] mb-4">
+                    <i class="fas fa-graduation-cap mr-2 text-[#0a7aa8]"></i> Education
+                </h3>
                 @if($application->applicant->educationHistories->isNotEmpty())
                     <div class="space-y-3">
                         @foreach($application->applicant->educationHistories as $edu)
                             <div class="p-3 bg-gray-50 rounded-xl">
                                 <p class="font-semibold text-sm">{{ $edu->institution }}</p>
-                                <p class="text-xs text-gray-500">{{ $edu->qualification_label }} in {{ $edu->field_of_study }} | {{ $edu->graduation_year }}</p>
+                                <p class="text-xs text-gray-500">{{ $edu->qualification_label ?? $edu->qualification }} in {{ $edu->field_of_study }} | {{ $edu->graduation_year }}</p>
                             </div>
                         @endforeach
                     </div>
@@ -63,10 +78,14 @@
                     <p class="text-sm text-gray-400">No education records.</p>
                 @endif
             </div>
+            @endif
 
             <!-- Work Experience -->
+            @if($application->applicant && $application->applicant->workExperiences)
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200/70">
-                <h3 class="font-bold text-lg text-[#0b3b5a] mb-4"><i class="fas fa-hard-hat mr-2 text-[#0a7aa8]"></i> Work Experience</h3>
+                <h3 class="font-bold text-lg text-[#0b3b5a] mb-4">
+                    <i class="fas fa-hard-hat mr-2 text-[#0a7aa8]"></i> Work Experience
+                </h3>
                 @if($application->applicant->workExperiences->isNotEmpty())
                     <div class="space-y-3">
                         @foreach($application->applicant->workExperiences as $exp)
@@ -80,6 +99,7 @@
                     <p class="text-sm text-gray-400">No work experience recorded (Fresh Graduate).</p>
                 @endif
             </div>
+            @endif
         </div>
 
         <!-- Sidebar -->
@@ -126,8 +146,8 @@
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200/70">
                 <h3 class="font-bold text-lg text-[#0b3b5a] mb-4">Actions</h3>
                 <div class="space-y-2">
-                    <a href="{{ route('applicant.applications') }}" class="block text-center border border-gray-300 text-gray-600 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition">
-                        ← Back to My Applications
+                    <a href="{{ url()->previous() }}" class="block text-center border border-gray-300 text-gray-600 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition">
+                        ← Back
                     </a>
                 </div>
             </div>
