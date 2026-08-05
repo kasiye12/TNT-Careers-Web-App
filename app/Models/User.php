@@ -13,8 +13,17 @@ class User extends Authenticatable
     use HasApiTokens, HasRoles, Notifiable;
 
     protected $fillable = [
-        'name', 'email', 'phone', 'password', 'user_type', 'status',
-        'email_verified_at', 'notification_preferences', 'google_id', 'avatar',
+        'name',
+        'email',
+        'phone',
+        'password',
+        'user_type',
+        'department',
+        'status',
+        'email_verified_at',
+        'notification_preferences',
+        'google_id',
+        'avatar',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -24,11 +33,11 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    public function applicant() { return $this->hasOne(Applicant::class); }
+    public function applicant()
+    {
+        return $this->hasOne(Applicant::class);
+    }
 
-    /**
-     * Send the password reset notification.
-     */
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new ResetPasswordNotification($token));

@@ -19,9 +19,7 @@
     </div>
 
     @if(session('success'))
-        <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl mb-6 text-sm flex items-center gap-2">
-            <i class="fas fa-check-circle"></i> {{ session('success') }}
-        </div>
+        <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl mb-6 text-sm">{{ session('success') }}</div>
     @endif
 
     @if($applications->isEmpty())
@@ -41,29 +39,33 @@
                             </div>
                             <div>
                                 <h3 class="font-bold text-lg text-[#0b3b5a]">{{ $app->applicant->full_name_en ?? 'N/A' }}</h3>
-                                <p class="text-sm text-gray-500">{{ $app->applicant->user->email ?? '' }} | {{ $app->applicant->user->phone ?? '' }}</p>
+                                <p class="text-sm text-gray-500">{{ $app->applicant->user->email ?? '' }}</p>
                                 <div class="mt-2 p-3 bg-gray-50 rounded-xl">
                                     <p class="font-semibold text-sm">{{ $app->vacancy->title ?? 'N/A' }}</p>
-                                    <p class="text-xs text-gray-400">{{ $app->vacancy->vacancy_number ?? '' }} | {{ $app->vacancy->department ?? '' }}</p>
-                                </div>
-                                <div class="flex flex-wrap gap-3 mt-2 text-sm text-gray-600">
-                                    <span>{{ $app->applicant->total_years_exp ?? 0 }} yrs exp</span>
-                                    <span>{{ $app->applicant->educationHistories->first()->qualification_label ?? 'N/A' }}</span>
-                                    <span>Applied {{ $app->created_at->format('M d, Y') }}</span>
+                                    <p class="text-xs text-gray-400">{{ $app->vacancy->vacancy_number ?? '' }}</p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- ACTION BUTTONS -->
+                        <!-- ACTIONS -->
                         <div class="flex flex-col gap-2 flex-shrink-0 min-w-[170px]">
                             <span class="text-xs text-gray-400 font-semibold uppercase tracking-wide text-center">Actions</span>
                             
-                            <!-- APPROVE: Shortlist -->
+                            <!-- VERIFY DOCUMENTS -->
+                            <form action="{{ route('hr.applications.update-status', $app) }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="status" value="document_verified">
+                                <button type="submit" class="w-full px-4 py-2.5 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 transition">
+                                    ✅ Verify Documents
+                                </button>
+                            </form>
+                            
+                            <!-- SHORTLIST (Skip Verify) -->
                             <form action="{{ route('hr.applications.update-status', $app) }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="status" value="shortlisted">
-                                <button type="submit" class="w-full px-4 py-2.5 bg-yellow-500 text-white rounded-xl text-sm font-bold hover:bg-yellow-600 transition shadow-sm">
-                                    ⭐ Shortlist (Approve)
+                                <button type="submit" class="w-full px-4 py-2.5 bg-yellow-500 text-white rounded-xl text-sm font-bold hover:bg-yellow-600 transition">
+                                    ⭐ Shortlist Directly
                                 </button>
                             </form>
 
@@ -73,7 +75,6 @@
                                 ❌ Reject
                             </button>
 
-                            <!-- View -->
                             <a href="{{ route('applicant.applications.show', $app) }}" 
                                 class="w-full px-4 py-2.5 border border-gray-300 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 transition text-center">
                                 👁️ View Details
@@ -91,7 +92,6 @@
 <div id="rejectModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
     <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl mx-4">
         <h3 class="text-lg font-bold text-[#0b3b5a] mb-4">❌ Reject Application</h3>
-        <p class="text-sm text-gray-500 mb-4">Are you sure you want to reject this application? This action can be undone by changing the status later.</p>
         <form id="rejectForm" method="POST">
             @csrf
             <input type="hidden" name="status" value="rejected">
@@ -112,8 +112,6 @@ function showRejectModal(appId) {
     document.getElementById('rejectForm').action = '/hr/applications/' + appId + '/status';
     document.getElementById('rejectModal').classList.remove('hidden');
 }
-function hideRejectModal() {
-    document.getElementById('rejectModal').classList.add('hidden');
-}
+function hideRejectModal() { document.getElementById('rejectModal').classList.add('hidden'); }
 </script>
 @endsection

@@ -26,50 +26,35 @@ class VacancyController extends Controller implements HasMiddleware
         ];
     }
 
-    // PUBLIC - Job Listings
     public function publicIndex(Request $request)
     {
         $query = Vacancy::where('status', 'published')->where('closing_date', '>=', now());
-
         if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('department', 'like', "%{$search}%")
-                  ->orWhere('duty_station', 'like', "%{$search}%");
+            $query->where(function($q) use ($request) {
+                $q->where('title', 'like', "%{$request->search}%")
+                  ->orWhere('department', 'like', "%{$request->search}%")
+                  ->orWhere('duty_station', 'like', "%{$request->search}%");
             });
         }
-        if ($request->filled('category')) {
-            $query->where('department', 'like', "%{$request->category}%");
-        }
+        if ($request->filled('category')) $query->where('department', 'like', "%{$request->category}%");
         if ($request->filled('location')) {
             if ($request->location === 'head_office') $query->where('duty_station_category', 'head_office');
             elseif ($request->location === 'project_site') $query->where('duty_station_category', 'project_site');
         }
-        if ($request->filled('type')) {
-            $query->where('employment_type', $request->type);
-        }
+        if ($request->filled('type')) $query->where('employment_type', $request->type);
 
         $vacancies = $query->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
         $departments = Vacancy::where('status', 'published')->distinct()->pluck('department')->filter()->values();
-
         return view('public.vacancies', compact('vacancies', 'departments'));
     }
 
-    // PUBLIC - Job Detail with View Count
     public function publicShow(Vacancy $vacancy)
     {
-        if ($vacancy->status !== 'published' && !Auth::check()) {
-            abort(404);
-        }
-        
-        // Increment view count
+        if ($vacancy->status !== 'published' && !Auth::check()) abort(404);
         $vacancy->incrementViews();
-        
         return view('public.vacancy-detail', compact('vacancy'));
     }
 
-    // API
     public function apiLatest()
     {
         return response()->json(
@@ -84,7 +69,6 @@ class VacancyController extends Controller implements HasMiddleware
         );
     }
 
-    // HR Methods
     public function index()
     {
         $vacancies = Vacancy::withCount('applications')->orderBy('created_at', 'desc')->paginate(20);
@@ -100,7 +84,7 @@ class VacancyController extends Controller implements HasMiddleware
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'job_category' => 'required|string',
+            'job_category' => 'required|string|max:100',
             'department' => 'required|string|max:100',
             'duty_station_category' => 'required|in:head_office,project_site',
             'duty_station' => 'required|string|max:100',
@@ -114,7 +98,9 @@ class VacancyController extends Controller implements HasMiddleware
             'description_en' => 'nullable|string',
             'description_am' => 'nullable|string',
             'requirements_en' => 'nullable|string',
+            'requirements_am' => 'nullable|string',
             'responsibilities_en' => 'nullable|string',
+            'responsibilities_am' => 'nullable|string',
         ]);
 
         $validated['vacancy_number'] = $this->numberGenerator->generate();
@@ -122,7 +108,8 @@ class VacancyController extends Controller implements HasMiddleware
         $validated['status'] = request('status', 'draft');
 
         Vacancy::create($validated);
-        return redirect()->route('hr.vacancies.index')->with('success', 'Vacancy created!');
+
+        return redirect()->route('hr.vacancies.index')->with('success', '✅ Vacancy created successfully!');
     }
 
     public function edit(Vacancy $vacancy) { return view('hr.vacancies.edit', compact('vacancy')); }

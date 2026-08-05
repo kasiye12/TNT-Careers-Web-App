@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Application;
 use App\Models\Vacancy;
-use App\Services\AutoScreeningService;
-use App\Services\ApplicationPDFService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -13,21 +11,14 @@ use Illuminate\Routing\Controllers\Middleware;
 
 class ApplicationController extends Controller implements HasMiddleware
 {
-    protected $screeningService;
-    protected $pdfService;
-
-    public function __construct(AutoScreeningService $screeningService, ApplicationPDFService $pdfService)
-    {
-        $this->screeningService = $screeningService;
-        $this->pdfService = $pdfService;
-    }
-
     public static function middleware(): array
     {
-        return [new Middleware('auth')];
+        return [
+            new Middleware('auth'),
+            new Middleware('department'),
+        ];
     }
 
-    // APPLICANT METHODS
     public function apply(Vacancy $vacancy)
     {
         $user = Auth::user();
@@ -35,9 +26,13 @@ class ApplicationController extends Controller implements HasMiddleware
         
         $applicant = $user->applicant;
         if (!$applicant) return redirect()->route('applicant.profile.create')->with('warning', 'Create profile first.');
+        
         if (!$applicant->profile_completed) {
-            if (!$applicant->educationHistories()->exists()) return redirect()->route('applicant.education.create')->with('warning', 'Add education first.');
-            $applicant->update(['profile_completed' => true]);
+            if ($applicant->educationHistories()->exists()) {
+                $applicant->update(['profile_completed' => true]);
+            } else {
+                return redirect()->route('applicant.education.create')->with('warning', 'Add education history first.');
+            }
         }
         
         if (Application::where('vacancy_id', $vacancy->id)->where('applicant_id', $applicant->id)->exists()) {
@@ -51,7 +46,10 @@ class ApplicationController extends Controller implements HasMiddleware
     public function store(Request $request, Vacancy $vacancy)
     {
         $applicant = Auth::user()->applicant;
-        if (!$applicant || !$applicant->profile_completed) return redirect()->route('applicant.profile.create')->with('error', 'Complete profile first.');
+        if (!$applicant) return redirect()->route('applicant.profile.create');
+        if (!$applicant->profile_completed && $applicant->educationHistories()->exists()) {
+            $applicant->update(['profile_completed' => true]);
+        }
         
         $request->validate(['declaration_accepted' => 'required|accepted']);
         
@@ -67,7 +65,7 @@ class ApplicationController extends Controller implements HasMiddleware
             'submitted_at' => now(),
         ]);
         
-        return redirect()->route('applicant.applications')->with('success', '✅ Application submitted!');
+        return redirect()->route('applicant.applications')->with('success', '🎉 Application submitted!');
     }
 
     public function myApplications()
@@ -78,98 +76,90 @@ class ApplicationController extends Controller implements HasMiddleware
         return view('applicant.applications', compact('applications'));
     }
 
+    /**
+     * Show application details
+     * ADMIN: Can view ALL
+     * HR: Can view ALL (no restriction)
+     * EVALUATOR: Can view only own department
+     * APPLICANT: Can view only own applications
+     */
     public function show(Application $application)
     {
-        $application->load(['vacancy', 'applicant.user', 'applicant.educationHistories', 'applicant.workExperiences', 'interviews', 'evaluationScores']);
+        $user = Auth::user();
+        
+        // APPLICANT: Can only view own applications
+        if ($user->user_type === 'applicant') {
+            if ($application->applicant_id !== $user->applicant->id) {
+                abort(403, '❌ Access Denied: This is not your application.');
+            }
+        }
+        
+        // EVALUATOR: Can only view own department
+        if ($user->user_type === 'evaluator') {
+            $userDept = $user->department;
+            $vacancyDept = $application->vacancy->department ?? '';
+            if ($userDept && $vacancyDept && !stripos($vacancyDept, $userDept) && !stripos($userDept, $vacancyDept)) {
+                abort(403, '❌ Access Denied: This candidate is from ' . $vacancyDept . '. You are in ' . $userDept . ' department.');
+            }
+        }
+        
+        // ADMIN & HR: Can view ALL (no restriction)
+        
+        $application->load(['vacancy', 'applicant.user', 'applicant.educationHistories', 'applicant.workExperiences']);
         return view('applications.show', compact('application'));
     }
 
-    // HR METHODS
+    // HR Methods
     public function reviewIndex()
     {
-        $applications = Application::with(['vacancy', 'applicant.user'])
-            ->where('status', 'submitted')
-            ->latest()
-            ->paginate(20);
+        $user = Auth::user();
+        $query = Application::with(['vacancy', 'applicant.user'])->where('status', 'submitted');
+        
+        // EVALUATOR: Only own department
+        if ($user->user_type === 'evaluator' && $user->department) {
+            $query->whereHas('vacancy', fn($q) => $q->where('department', 'like', '%'.$user->department.'%'));
+        }
+        // HR & ADMIN: See ALL
+        
+        $applications = $query->latest()->paginate(20);
         return view('hr.applications.review', compact('applications'));
     }
 
-    public function pipeline()
-    {
-        return view('hr.applications.pipeline');
-    }
+    public function pipeline() { return view('hr.applications.pipeline'); }
 
-    /**
-     * UPDATE APPLICATION STATUS - APPROVE / REJECT / MOVE STAGE
-     */
     public function updateStatus(Request $request, Application $application)
     {
-        $validStatuses = [
-            'document_verified', 'shortlisted', 
-            'written_exam', 'interview', 'medical_check', 
-            'selected', 'rejected'
-        ];
-        
-        $request->validate([
-            'status' => 'required|in:' . implode(',', $validStatuses),
-            'notes' => 'nullable|string|max:500',
-        ]);
+        $validStatuses = ['document_verified', 'shortlisted', 'written_exam', 'interview', 'medical_check', 'selected', 'rejected'];
+        $request->validate(['status' => 'required|in:' . implode(',', $validStatuses)]);
 
-        $oldStatus = $application->status;
-        $newStatus = $request->status;
-        
-        // Update application
         $application->update([
-            'status' => $newStatus,
-            'rejection_reason' => $newStatus === 'rejected' ? ($request->notes ?: 'Application rejected') : null,
+            'status' => $request->status,
+            'rejection_reason' => $request->status === 'rejected' ? ($request->notes ?: 'Rejected') : null,
         ]);
 
-        // Log status change
-        try {
-            $application->statusLogs()->create([
-                'changed_by' => Auth::id(),
-                'old_status' => $oldStatus,
-                'new_status' => $newStatus,
-                'notes' => $request->notes ?? 'Status updated to ' . ucwords(str_replace('_', ' ', $newStatus)),
-            ]);
-        } catch (\Exception $e) {
-            // Continue even if logging fails
-        }
-
-        // Success messages
         $messages = [
-            'document_verified' => '✅ Documents verified successfully!',
-            'shortlisted' => '⭐ Candidate shortlisted! Move to next stage.',
-            'written_exam' => '📝 Candidate moved to Written Exam stage.',
-            'interview' => '🎤 Candidate moved to Interview stage.',
-            'medical_check' => '🏥 Candidate moved to Medical Check stage.',
-            'selected' => '🎉 Candidate SELECTED! You can now generate an offer letter.',
+            'document_verified' => '✅ Documents verified!',
+            'shortlisted' => '⭐ Candidate shortlisted!',
+            'written_exam' => '📝 Moved to Written Exam.',
+            'interview' => '🎤 Moved to Interview.',
+            'selected' => '🎉 Candidate SELECTED!',
             'rejected' => '❌ Application rejected.',
         ];
 
-        return back()->with('success', $messages[$newStatus] ?? 'Status updated successfully!');
+        return back()->with('success', $messages[$request->status] ?? 'Status updated!');
     }
 
     public function shortlistedCandidates()
     {
-        $applications = Application::with(['vacancy', 'applicant.user'])
-            ->where('status', 'shortlisted')
-            ->latest()
-            ->paginate(20);
-        return view('hr.applications.shortlisted', compact('applications'));
-    }
-
-    public function downloadHRPDF(Application $application)
-    {
-        $pdfPath = storage_path("app/private/applications/{$application->id}/HR_Application_{$application->id}.pdf");
-        if (!file_exists($pdfPath)) {
-            try {
-                $pdfPath = $this->pdfService->generateHRMasterPDF($application);
-            } catch (\Exception $e) {
-                return back()->with('error', 'Could not generate PDF.');
-            }
+        $user = Auth::user();
+        $query = Application::with(['vacancy', 'applicant.user'])->where('status', 'shortlisted');
+        
+        if ($user->user_type === 'evaluator' && $user->department) {
+            $query->whereHas('vacancy', fn($q) => $q->where('department', 'like', '%'.$user->department.'%'));
         }
-        return response()->download($pdfPath);
+        
+        $applications = $query->latest()->paginate(20);
+        return view('hr.applications.shortlisted', compact('applications'));
     }
 
     public function search(Request $request)
@@ -177,8 +167,23 @@ class ApplicationController extends Controller implements HasMiddleware
         $query = Application::with(['vacancy', 'applicant.user']);
         if ($request->filled('vacancy_id')) $query->where('vacancy_id', $request->vacancy_id);
         if ($request->filled('status')) $query->where('status', $request->status);
+        
         $applications = $query->latest()->paginate(20);
         $vacancies = Vacancy::pluck('title', 'id');
         return view('hr.applications.search', compact('applications', 'vacancies'));
+    }
+
+    public function downloadHRPDF(Application $application)
+    {
+        $pdfPath = storage_path("app/private/applications/{$application->id}/HR_Application_{$application->id}.pdf");
+        if (!file_exists($pdfPath)) {
+            try { 
+                $pdfService = app(\App\Services\ApplicationPDFService::class);
+                $pdfPath = $pdfService->generateHRMasterPDF($application); 
+            } catch (\Exception $e) { 
+                return back()->with('error', 'Could not generate PDF.'); 
+            }
+        }
+        return response()->download($pdfPath);
     }
 }

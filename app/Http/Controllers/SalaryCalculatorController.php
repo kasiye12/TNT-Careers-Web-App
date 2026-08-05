@@ -14,76 +14,100 @@ class SalaryCalculatorController extends Controller
     public function calculate(Request $request)
     {
         $request->validate([
+            'employee_name' => 'nullable|string|max:255',
             'basic_salary' => 'required|numeric|min:0',
             'working_days' => 'required|numeric|min:1|max:31',
+            'standard_days' => 'required|numeric|min:1|max:31',
             'transport_allowance' => 'nullable|numeric|min:0',
-            'overtime_hours' => 'nullable|numeric|min:0',
             'responsibility_allowance' => 'nullable|numeric|min:0',
-            'loan' => 'nullable|numeric|min:0',
+            'fuel_allowance' => 'nullable|numeric|min:0',
+            'per_diem' => 'nullable|numeric|min:0',
+            'overtime_bonus' => 'nullable|numeric|min:0',
+            'other_earnings' => 'nullable|numeric|min:0',
+            'loan_deduction' => 'nullable|numeric|min:0',
+            'other_deduction' => 'nullable|numeric|min:0',
         ]);
 
+        $employeeName = $request->employee_name ?: 'Employee';
         $basicSalary = (float) $request->basic_salary;
         $workingDays = (float) $request->working_days;
-        $monthlyPay = round(($basicSalary / 30) * $workingDays, 2);
+        $standardDays = (float) $request->standard_days;
+        
+        // Monthly Pay = (Basic Salary / Standard Days) × Working Days
+        $monthlyPay = round(($basicSalary / $standardDays) * $workingDays, 2);
+        
+        // Allowances
         $transportAllowance = (float) ($request->transport_allowance ?? 0);
-        
-        $hourlyRate = $basicSalary / 30 / 8;
-        $overtimeHours = (float) ($request->overtime_hours ?? 0);
-        $overtimePay = round($overtimeHours * $hourlyRate * 1.5, 2);
-        
         $responsibilityAllowance = (float) ($request->responsibility_allowance ?? 0);
-        $loan = (float) ($request->loan ?? 0);
+        $fuelAllowance = (float) ($request->fuel_allowance ?? 0);
+        $perDiem = (float) ($request->per_diem ?? 0);
+        $overtimeBonus = (float) ($request->overtime_bonus ?? 0);
+        $otherEarnings = (float) ($request->other_earnings ?? 0);
         
-        // Taxable = Monthly Pay + OT + Responsibility (Transport NOT taxed)
-        $taxableEarning = round($monthlyPay + $overtimePay + $responsibilityAllowance, 2);
+        // Total Earnings
+        $totalEarnings = round($monthlyPay + $transportAllowance + $responsibilityAllowance + 
+                              $fuelAllowance + $perDiem + $overtimeBonus + $otherEarnings, 2);
         
-        // Gross = Taxable + Transport
-        $grossSalary = round($taxableEarning + $transportAllowance, 2);
+        // Taxable Income = Monthly Pay + Responsibility + Fuel + Per Diem + OT + Other
+        // (Transport is usually non-taxable in Ethiopia)
+        $taxableIncome = round($monthlyPay + $responsibilityAllowance + $fuelAllowance + 
+                              $perDiem + $overtimeBonus + $otherEarnings, 2);
         
-        // Ethiopian Tax 2025
-        $incomeTax = round($this->calculateTax($taxableEarning), 2);
+        // Income Tax (Ethiopian 2025)
+        $incomeTax = round($this->calculateTax($taxableIncome), 2);
         
-        // Pension
+        // Pension (7% of Basic Salary)
         $pensionEmployee = round($basicSalary * 0.07, 2);
         $pensionCompany = round($basicSalary * 0.11, 2);
         
-        // Total Deduction
-        $totalDeduction = round($incomeTax + $pensionEmployee + $loan, 2);
+        // Deductions
+        $loanDeduction = (float) ($request->loan_deduction ?? 0);
+        $otherDeduction = (float) ($request->other_deduction ?? 0);
+        $totalDeductions = round($incomeTax + $pensionEmployee + $loanDeduction + $otherDeduction, 2);
         
         // Net Pay
-        $netPay = round($grossSalary - $totalDeduction, 2);
+        $netPay = round($totalEarnings - $totalDeductions, 2);
         
         return response()->json([
             'success' => true,
-            'basic_salary' => round($basicSalary, 2),
+            'employee_name' => $employeeName,
+            'basic_salary' => $basicSalary,
             'working_days' => $workingDays,
+            'standard_days' => $standardDays,
             'monthly_pay' => $monthlyPay,
             'transport_allowance' => $transportAllowance,
-            'overtime' => $overtimePay,
             'responsibility_allowance' => $responsibilityAllowance,
-            'loan' => $loan,
-            'taxable_earning' => $taxableEarning,
-            'gross_salary' => $grossSalary,
+            'fuel_allowance' => $fuelAllowance,
+            'per_diem' => $perDiem,
+            'overtime_bonus' => $overtimeBonus,
+            'other_earnings' => $otherEarnings,
+            'total_earnings' => $totalEarnings,
+            'taxable_income' => $taxableIncome,
             'income_tax' => $incomeTax,
             'pension_employee' => $pensionEmployee,
             'pension_company' => $pensionCompany,
-            'total_deduction' => $totalDeduction,
+            'loan_deduction' => $loanDeduction,
+            'other_deduction' => $otherDeduction,
+            'total_deductions' => $totalDeductions,
             'net_pay' => $netPay,
             'currency' => 'ETB',
             'formatted' => [
                 'basic_salary' => number_format($basicSalary, 2),
-                'working_days' => number_format($workingDays, 2),
                 'monthly_pay' => number_format($monthlyPay, 2),
                 'transport_allowance' => number_format($transportAllowance, 2),
-                'overtime' => number_format($overtimePay, 2),
                 'responsibility_allowance' => number_format($responsibilityAllowance, 2),
-                'loan' => number_format($loan, 2),
-                'taxable_earning' => number_format($taxableEarning, 2),
-                'gross_salary' => number_format($grossSalary, 2),
+                'fuel_allowance' => number_format($fuelAllowance, 2),
+                'per_diem' => number_format($perDiem, 2),
+                'overtime_bonus' => number_format($overtimeBonus, 2),
+                'other_earnings' => number_format($otherEarnings, 2),
+                'total_earnings' => number_format($totalEarnings, 2),
+                'taxable_income' => number_format($taxableIncome, 2),
                 'income_tax' => number_format($incomeTax, 2),
                 'pension_employee' => number_format($pensionEmployee, 2),
                 'pension_company' => number_format($pensionCompany, 2),
-                'total_deduction' => number_format($totalDeduction, 2),
+                'loan_deduction' => number_format($loanDeduction, 2),
+                'other_deduction' => number_format($otherDeduction, 2),
+                'total_deductions' => number_format($totalDeductions, 2),
                 'net_pay' => number_format($netPay, 2),
             ]
         ]);

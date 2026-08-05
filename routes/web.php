@@ -168,3 +168,16 @@ Route::get('/search', [SearchController::class, 'global'])->name('search');
 // Offer letter public
 Route::get('/offer-letters/{offerLetter}/view', [OfferLetterController::class, 'view'])->name('offer-letters.view');
 Route::post('/offer-letters/{offerLetter}/respond', [OfferLetterController::class, 'respond'])->name('offer-letters.respond');
+
+// HR - View All Department Evaluations
+Route::get('/hr/evaluations/overview', function () {
+    return view('hr.evaluations.overview');
+})->name('hr.evaluations.overview');
+
+// Direct apply route fix
+Route::get('/apply-test/{vacancy}', function (App\Models\Vacancy $vacancy) {
+    $applicant = Auth::user()->applicant;
+    if (!$applicant) return redirect()->route('applicant.profile.create');
+    return view('applicant.apply', compact('vacancy', 'applicant'));
+})->middleware('auth')->name('apply.test');
+Route::get("/hr/reports/analytics", function () { return view("hr.reports.analytics"); })->name("hr.reports.analytics");

@@ -24,7 +24,7 @@ class AccountController extends Controller implements HasMiddleware
     public function settings()
     {
         $user = Auth::user();
-        return view('account.settings', compact('user'));
+        return view('account.profile-settings');
     }
 
     /**
