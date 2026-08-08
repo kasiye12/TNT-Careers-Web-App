@@ -13,36 +13,32 @@ class DepartmentAccess
     {
         $user = Auth::user();
         
+        // If not logged in, let auth middleware handle it
+        if (!$user) {
+            return $next($request);
+        }
+        
         // Admin - always allowed
         if ($user->user_type === 'admin') {
             return $next($request);
         }
         
-        // For HR and Evaluator
+        // For HR and Evaluator - auto-assign department if missing
         if (in_array($user->user_type, ['hr_manager', 'evaluator'])) {
-            $userDepartment = $user->department;
-            
-            // If no department, still allow access but show warning
-            if (!$userDepartment) {
-                // Auto-assign a default department for HR
-                if ($user->user_type === 'hr_manager') {
-                    $user->update(['department' => 'Human Resource Development and Administration Department']);
-                    $userDepartment = $user->department;
-                }
-                // For evaluator, auto-assign Engineering
-                if ($user->user_type === 'evaluator') {
-                    $user->update(['department' => 'Engineering Department']);
-                    $userDepartment = $user->department;
-                }
+            if (!$user->department) {
+                // Auto-assign based on user type instead of blocking
+                $defaultDept = $user->user_type === 'hr_manager' 
+                    ? 'Human Resource Development and Administration Department'
+                    : 'Engineering Department';
+                
+                $user->update(['department' => $defaultDept]);
             }
             
             session([
-                'user_department' => $userDepartment,
+                'user_department' => $user->department,
                 'can_view_all' => ($user->user_type === 'hr_manager'),
                 'can_evaluate_all' => false,
             ]);
-            
-            return $next($request);
         }
         
         return $next($request);

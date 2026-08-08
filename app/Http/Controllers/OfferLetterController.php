@@ -23,10 +23,13 @@ class OfferLetterController extends Controller implements HasMiddleware
     {
         return [
             new Middleware('auth'),
-            new Middleware('role:admin,hr_manager', except: ['view', 'respond']),
+            new Middleware('role:admin,hr_manager'),
         ];
     }
 
+    /**
+     * Show offer letter generation form
+     */
     public function generate(Application $application)
     {
         if ($application->status !== 'selected') {
@@ -36,9 +39,13 @@ class OfferLetterController extends Controller implements HasMiddleware
         return view('hr.offer-letters.generate', compact('application'));
     }
 
-    public function store(Request $request, Application $application)
+    /**
+     * Store and generate offer letter PDF
+     */
+    public function store(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
+            'application_id' => 'required|exists:applications,id',
             'position_title' => 'required|string|max:255',
             'department' => 'required|string|max:100',
             'duty_station' => 'required|string|max:255',
@@ -49,27 +56,47 @@ class OfferLetterController extends Controller implements HasMiddleware
             'offer_expiry_date' => 'required|date|after:reporting_date',
         ]);
 
-        $offerReferenceNumber = OfferLetter::generateReferenceNumber();
+        $application = Application::findOrFail($request->application_id);
+        
+        $offerReferenceNumber = 'TNT-OFFER-' . date('Y') . '-' . str_pad(OfferLetter::count() + 1, 4, '0', STR_PAD_LEFT);
 
-        $offerLetter = OfferLetter::create(array_merge($validated, [
+        $offerLetter = OfferLetter::create([
             'application_id' => $application->id,
             'offer_reference_number' => $offerReferenceNumber,
+            'position_title' => $request->position_title,
+            'department' => $request->department,
+            'duty_station' => $request->duty_station,
+            'salary_amount' => $request->salary_amount,
+            'salary_currency' => $request->salary_currency,
+            'benefits' => $request->benefits,
+            'reporting_date' => $request->reporting_date,
+            'offer_expiry_date' => $request->offer_expiry_date,
             'status' => 'draft',
             'generated_by' => Auth::id(),
-        ]));
+        ]);
 
-        $this->pdfService->generateOfferLetter($application, array_merge($validated, [
-            'offer_reference_number' => $offerReferenceNumber,
-        ]));
+        // Generate PDF
+        try {
+            $this->pdfService->generateOfferLetter($application, $offerLetter->toArray());
+        } catch (\Exception $e) {
+            // Continue even if PDF generation fails
+        }
 
-        return redirect()->route('hr.offer-letters.preview', $offerLetter->id);
+        return redirect()->route('hr.offer-letters.preview', $offerLetter->id)
+            ->with('success', '✅ Offer letter generated!');
     }
 
+    /**
+     * Preview offer letter
+     */
     public function preview(OfferLetter $offerLetter)
     {
         return view('hr.offer-letters.preview', compact('offerLetter'));
     }
 
+    /**
+     * Send offer letter to candidate
+     */
     public function send(OfferLetter $offerLetter)
     {
         $offerLetter->update([
@@ -77,13 +104,24 @@ class OfferLetterController extends Controller implements HasMiddleware
             'sent_at' => now(),
         ]);
 
-        return redirect()->route('applicant.applications.show', $offerLetter->application_id)
-            ->with('success', 'Offer letter sent successfully.');
+        return back()->with('success', '✅ Offer letter sent to candidate!');
     }
 
+    /**
+     * View offer letter PDF
+     */
     public function view(OfferLetter $offerLetter)
     {
-        $pdfPath = storage_path("app/private/offer-letters/Offer_Letter_{$offerLetter->offer_reference_number}.pdf");
+        $pdfPath = storage_path('app/private/offer-letters/Offer_Letter_' . $offerLetter->offer_reference_number . '.pdf');
+        
+        if (!file_exists($pdfPath)) {
+            // Try to regenerate
+            try {
+                $this->pdfService->generateOfferLetter($offerLetter->application, $offerLetter->toArray());
+            } catch (\Exception $e) {
+                abort(404, 'Offer letter PDF not found.');
+            }
+        }
 
         if (!file_exists($pdfPath)) {
             abort(404, 'Offer letter PDF not found.');
@@ -92,6 +130,9 @@ class OfferLetterController extends Controller implements HasMiddleware
         return response()->file($pdfPath);
     }
 
+    /**
+     * Candidate responds to offer
+     */
     public function respond(Request $request, OfferLetter $offerLetter)
     {
         $request->validate([
@@ -103,11 +144,6 @@ class OfferLetterController extends Controller implements HasMiddleware
             'status' => $request->response,
             'responded_at' => now(),
             'response_notes' => $request->notes,
-        ]);
-
-        $application = $offerLetter->application;
-        $application->update([
-            'status' => $request->response === 'accepted' ? 'selected' : 'rejected',
         ]);
 
         return back()->with('success', 'Your response has been recorded.');

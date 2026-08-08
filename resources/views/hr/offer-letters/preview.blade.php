@@ -9,7 +9,7 @@
     </div>
 
     <!-- Letter Preview -->
-    <div class="bg-white rounded-2xl p-8 shadow-sm border mb-6 min-h-[600px]">
+    <div class="bg-white rounded-2xl p-8 shadow-sm border mb-6">
         <div class="text-center mb-8 border-b-2 border-gray-200 pb-6">
             <h2 class="text-xl font-extrabold text-[#0b3b5a]">TNT Construction & Trading PLC</h2>
             <p class="text-gray-500 text-sm">Grade One General Contractor</p>
@@ -45,7 +45,7 @@
     </div>
 
     <div class="flex justify-between">
-        <a href="{{ route('applicant.applications.show', $offerLetter->application) }}" class="border border-gray-300 text-gray-600 px-6 py-3 rounded-xl font-semibold text-sm">Back</a>
+        <a href="{{ url()->previous() }}" class="border border-gray-300 text-gray-600 px-6 py-3 rounded-xl font-semibold text-sm">Back</a>
         <div class="flex gap-3">
             <a href="{{ route('offer-letters.view', $offerLetter) }}" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold text-sm" target="_blank">
                 <i class="fas fa-file-pdf mr-2"></i> View PDF

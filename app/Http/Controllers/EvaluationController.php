@@ -23,9 +23,6 @@ class EvaluationController extends Controller implements HasMiddleware
 
     /**
      * Submit evaluation score
-     * HR can only evaluate own department
-     * Evaluator can only evaluate own department
-     * Admin can evaluate any department
      */
     public function scoreApplication(Request $request, Application $application)
     {
@@ -39,19 +36,12 @@ class EvaluationController extends Controller implements HasMiddleware
         $userDepartment = $user->department ?? 'General';
         $vacancyDepartment = $application->vacancy->department ?? 'General';
 
-        // STRICT EVALUATION ACCESS:
-        // Admin: Can evaluate all
-        // HR/Evaluator: Can only evaluate their own department
         if ($user->user_type !== 'admin') {
             if (!$this->departmentsMatch($userDepartment, $vacancyDepartment)) {
-                return back()->with('error', 
-                    '❌ Access Denied: You can only evaluate candidates from your department (' . 
-                    $userDepartment . '). This candidate belongs to ' . $vacancyDepartment . '.'
-                );
+                return back()->with('error', '❌ Access Denied: You can only evaluate candidates from your department (' . $userDepartment . '). This candidate belongs to ' . $vacancyDepartment . '.');
             }
         }
 
-        // Create or update score
         $existingScore = EvaluationScore::where('application_id', $application->id)
             ->where('evaluator_id', $user->id)
             ->where('evaluation_type', $request->evaluation_type)
@@ -66,6 +56,10 @@ class EvaluationController extends Controller implements HasMiddleware
             return back()->with('success', '✅ Your score updated!');
         }
 
+        $weight = 30;
+        if ($request->evaluation_type === 'written_exam') $weight = 40;
+        if ($request->evaluation_type === 'panel_interview') $weight = 30;
+
         EvaluationScore::create([
             'application_id' => $application->id,
             'evaluator_id' => $user->id,
@@ -73,7 +67,7 @@ class EvaluationController extends Controller implements HasMiddleware
             'evaluation_type' => $request->evaluation_type,
             'score' => $request->score,
             'max_score' => 100,
-            'weight_percentage' => $this->getWeight($request->evaluation_type),
+            'weight_percentage' => $weight,
             'comments' => $request->comments,
         ]);
 
@@ -81,8 +75,7 @@ class EvaluationController extends Controller implements HasMiddleware
     }
 
     /**
-     * VIEW scorecard - HR can view ALL departments
-     * Evaluator can view only own department
+     * VIEW scorecard with SMART WEIGHTING
      */
     public function getScorecard(Application $application)
     {
@@ -90,61 +83,62 @@ class EvaluationController extends Controller implements HasMiddleware
         $userDepartment = $user->department;
         $vacancyDepartment = $application->vacancy->department ?? 'General';
         
-        // HR can VIEW all departments (but can only EVALUATE own)
-        // Evaluator can only VIEW own department
         if ($user->user_type === 'evaluator') {
             if (!$this->departmentsMatch($userDepartment, $vacancyDepartment)) {
                 abort(403, '❌ Access Denied: You can only view candidates from your department.');
             }
         }
-        // HR Manager - allowed to view all (no restriction on viewing)
         
         $application->load(['evaluationScores.evaluator', 'vacancy', 'applicant']);
         $allScores = $application->evaluationScores;
         
+        $hasWrittenScore = $allScores->where('evaluation_type', 'written_exam')->count() > 0;
+        
         $academicScore = $allScores->where('evaluation_type', 'academic_experience')->avg('score') ?? 0;
         $writtenScore = $allScores->where('evaluation_type', 'written_exam')->avg('score') ?? 0;
         $interviewScore = $allScores->where('evaluation_type', 'panel_interview')->avg('score') ?? 0;
-        $weightedTotal = ($academicScore * 0.3) + ($writtenScore * 0.4) + ($interviewScore * 0.3);
+        
+        if ($hasWrittenScore) {
+            $academicWeight = 30;
+            $writtenWeight = 40;
+            $interviewWeight = 30;
+            $showWrittenSection = true;
+            $evaluationNote = null;
+        } else {
+            $academicWeight = 40;
+            $writtenWeight = 0;
+            $interviewWeight = 60;
+            $showWrittenSection = false;
+            $evaluationNote = '⚠️ Written Exam was skipped for this candidate. Weights adjusted: Academic 40% + Interview 60%.';
+        }
+        
+        $weightedTotal = ($academicScore * $academicWeight / 100) + ($writtenScore * $writtenWeight / 100) + ($interviewScore * $interviewWeight / 100);
 
         return view('evaluations.scorecard', compact(
-            'application', 'academicScore', 'writtenScore', 'interviewScore', 
-            'weightedTotal', 'allScores'
+            'application', 'allScores',
+            'academicScore', 'writtenScore', 'interviewScore', 'weightedTotal',
+            'hasWrittenScore', 'showWrittenSection', 'evaluationNote',
+            'academicWeight', 'writtenWeight', 'interviewWeight'
         ));
     }
 
-    /**
-     * Admin can edit any score
-     * HR can edit only own department's scores
-     * Evaluator can edit only own scores
-     */
     public function updateScoreAsAdmin(Request $request, EvaluationScore $score)
     {
         $user = Auth::user();
         
-        // Admin: Full access
         if ($user->user_type === 'admin') {
             $score->update(['score' => $request->score, 'comments' => $request->comments]);
             return back()->with('success', '✅ Score updated by Admin.');
         }
         
-        // HR: Can only edit own department's scores
         if ($user->user_type === 'hr_manager') {
-            $hrDepartment = $user->department;
-            $scoreDepartment = $score->evaluator_department;
-            
-            if (!$this->departmentsMatch($hrDepartment, $scoreDepartment)) {
-                return back()->with('error', 
-                    '❌ Cannot edit: This evaluation was submitted by ' . $scoreDepartment . 
-                    ' department. You can only edit ' . $hrDepartment . ' department evaluations.'
-                );
+            if (!$this->departmentsMatch($user->department, $score->evaluator_department)) {
+                return back()->with('error', '❌ Cannot edit: This evaluation belongs to another department.');
             }
-            
             $score->update(['score' => $request->score, 'comments' => $request->comments]);
             return back()->with('success', '✅ Score updated.');
         }
         
-        // Evaluator: Can only edit own scores
         if ($user->id === $score->evaluator_id) {
             $score->update(['score' => $request->score, 'comments' => $request->comments]);
             return back()->with('success', '✅ Your score updated.');
@@ -153,9 +147,6 @@ class EvaluationController extends Controller implements HasMiddleware
         abort(403, '❌ You cannot edit this evaluation.');
     }
 
-    /**
-     * Delete score
-     */
     public function deleteScore(EvaluationScore $score)
     {
         $user = Auth::user();
@@ -211,22 +202,24 @@ class EvaluationController extends Controller implements HasMiddleware
             ->whereIn('status', ['interview', 'medical_check'])
             ->get()
             ->map(function ($app) {
-                $app->academic_score = $app->evaluationScores->where('evaluation_type','academic_experience')->avg('score') ?? 0;
-                $app->written_score = $app->evaluationScores->where('evaluation_type','written_exam')->avg('score') ?? 0;
-                $app->interview_score = $app->evaluationScores->where('evaluation_type','panel_interview')->avg('score') ?? 0;
-                $app->weighted_total = ($app->academic_score * 0.3) + ($app->written_score * 0.4) + ($app->interview_score * 0.3);
+                $scores = $app->evaluationScores;
+                $academic = $scores->where('evaluation_type','academic_experience')->avg('score') ?? 0;
+                $written = $scores->where('evaluation_type','written_exam')->avg('score') ?? 0;
+                $interview = $scores->where('evaluation_type','panel_interview')->avg('score') ?? 0;
+                $hasWritten = $scores->where('evaluation_type','written_exam')->count() > 0;
+                
+                if ($hasWritten) {
+                    $app->weighted_total = ($academic * 0.3) + ($written * 0.4) + ($interview * 0.3);
+                } else {
+                    $app->weighted_total = ($academic * 0.4) + ($interview * 0.6);
+                }
+                $app->academic_score = $academic;
+                $app->written_score = $written;
+                $app->interview_score = $interview;
                 return $app;
             })->sortByDesc('weighted_total');
 
         return view('evaluations.shortlist-matrix', compact('applications'));
-    }
-
-    private function getWeight($type)
-    {
-        return match($type) {
-            'academic_experience' => 30, 'written_exam' => 40, 'panel_interview' => 30,
-            default => 0,
-        };
     }
 
     private function departmentsMatch($dept1, $dept2)

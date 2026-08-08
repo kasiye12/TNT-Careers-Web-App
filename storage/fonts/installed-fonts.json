@@ -31,5 +31,14 @@
         "bold": "\/home\/ks\/tnt-rats\/storage\/fonts\/raleway_bold_eaad0b6681e32f7107193d5db7c7c55f",
         "800": "\/home\/ks\/tnt-rats\/storage\/fonts\/raleway_800_42f678b56983b843c02d54652f3a71c7",
         "900": "raleway_900_e45da1b6c35b2e295a811ee866215fbd"
+    },
+    "merriweather": {
+        "300": "\/home\/ks\/tnt-rats\/storage\/fonts\/merriweather_300_78e91893aad9df335e9a23fecb4cebd7",
+        "normal": "\/home\/ks\/tnt-rats\/storage\/fonts\/merriweather_normal_95aa013cbc4399abe9fa147bdbc339ff",
+        "500": "\/home\/ks\/tnt-rats\/storage\/fonts\/merriweather_500_e52643e230da3b4883b55eedbf5d8a1d",
+        "600": "\/home\/ks\/tnt-rats\/storage\/fonts\/merriweather_600_5a4cb33569f35f855d037cb5fce3b454",
+        "bold": "\/home\/ks\/tnt-rats\/storage\/fonts\/merriweather_bold_63d1962cbdd7dc93b79a7bb1084bd81d",
+        "800": "\/home\/ks\/tnt-rats\/storage\/fonts\/merriweather_800_70834c180903b40b268bd2a16272da46",
+        "900": "merriweather_900_23de4b1495e790acad68403877cdf141"
     }
 }

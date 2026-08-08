@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>CV - {{ $data['full_name'] ?? 'Professional' }}</title>
+    <title>CV - {{ $data['full_name'] ?? 'Candidate' }}</title>
     <style>
         body {
             font-family: 'DejaVu Sans', sans-serif;
@@ -32,10 +32,9 @@
             border-bottom: 1px solid #333;
             padding-bottom: 3px;
             margin: 20px 0 10px;
-            letter-spacing: 1px;
         }
         .exp-item {
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
         .exp-item .header {
             display: flex;
@@ -43,14 +42,7 @@
             font-weight: bold;
         }
         .edu-item {
-            margin-bottom: 8px;
-        }
-        ul {
-            margin: 5px 0;
-            padding-left: 20px;
-        }
-        li {
-            margin-bottom: 3px;
+            margin-bottom: 6px;
         }
     </style>
 </head>
@@ -73,7 +65,7 @@
     @if(!empty($data['experience']) && is_array($data['experience']))
         <h2>Work Experience</h2>
         @foreach($data['experience'] as $exp)
-            @if(!empty($exp['company']))
+            @if(!empty($exp['company']) || !empty($exp['position']))
                 <div class="exp-item">
                     <div class="header">
                         <span>{{ $exp['position'] ?? '' }} - {{ $exp['company'] ?? '' }}</span>

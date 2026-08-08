@@ -19,14 +19,11 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string'],  // Accepts email OR phone
+            'email' => ['required', 'string'],
             'password' => ['required', 'string'],
         ];
     }
 
-    /**
-     * Attempt to authenticate the request's credentials.
-     */
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
@@ -37,13 +34,12 @@ class LoginRequest extends FormRequest
 
         // Try email first
         if (filter_var($loginField, FILTER_VALIDATE_EMAIL)) {
-            // Login with email
             if (Auth::attempt(['email' => $loginField, 'password' => $password], $remember)) {
                 RateLimiter::clear($this->throttleKey());
                 return;
             }
         } else {
-            // Login with phone - format the number
+            // Try phone number
             $phone = $loginField;
             if (str_starts_with($phone, '0')) {
                 $phone = '+251' . substr($phone, 1);
@@ -57,14 +53,13 @@ class LoginRequest extends FormRequest
                 return;
             }
             
-            // Also try email if phone format but could be email
+            // Also try as email
             if (Auth::attempt(['email' => $loginField, 'password' => $password], $remember)) {
                 RateLimiter::clear($this->throttleKey());
                 return;
             }
         }
 
-        // If all attempts fail
         RateLimiter::hit($this->throttleKey());
 
         throw ValidationException::withMessages([

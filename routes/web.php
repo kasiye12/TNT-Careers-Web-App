@@ -181,3 +181,18 @@ Route::get('/apply-test/{vacancy}', function (App\Models\Vacancy $vacancy) {
     return view('applicant.apply', compact('vacancy', 'applicant'));
 })->middleware('auth')->name('apply.test');
 Route::get("/hr/reports/analytics", function () { return view("hr.reports.analytics"); })->name("hr.reports.analytics");
+
+// Debug route for review page
+Route::get('/debug-review', function () {
+    try {
+        $user = Auth::user();
+        if (!$user) return 'Not logged in. Please login first.';
+        
+        $query = \App\Models\Application::with(['vacancy', 'applicant.user'])->where('status', 'submitted');
+        $applications = $query->latest()->paginate(20);
+        
+        return view('hr.applications.review', compact('applications'));
+    } catch (\Exception $e) {
+        return 'ERROR: ' . $e->getMessage() . '<br>File: ' . $e->getFile() . '<br>Line: ' . $e->getLine();
+    }
+})->middleware('auth');
